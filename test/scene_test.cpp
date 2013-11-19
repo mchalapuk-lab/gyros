@@ -69,7 +69,7 @@ class game_Scene : public ::testing::TestWithParam<size_t> {
 
 TEST_F(game_Scene, test_constructor_called_once) {
   gyros::Builder<CountingComponent> builder;
-  builder.newEntity().emplace<CountingComponent>();
+  builder.emplace<CountingComponent>();
   auto scene = builder.build();
   
   ASSERT_EQ(1, CountingComponent::constructor_calls);
@@ -78,7 +78,7 @@ TEST_F(game_Scene, test_constructor_called_once) {
 TEST_F(game_Scene, test_destructor_called_once_after_destroying_scene) {
   {
     gyros::Builder<CountingComponent> builder;
-    builder.newEntity().emplace<CountingComponent>();
+    builder.emplace<CountingComponent>();
     auto scene = builder.build();
   }
   ASSERT_EQ(1, CountingComponent::destructor_calls);
@@ -86,7 +86,7 @@ TEST_F(game_Scene, test_destructor_called_once_after_destroying_scene) {
 
 TEST_F(game_Scene, test_destructor_not_called_when_scene_not_destroyed) {
   gyros::Builder<CountingComponent> builder;
-  builder.newEntity().emplace<CountingComponent>();
+  builder.emplace<CountingComponent>();
   auto scene = builder.build();
 
   ASSERT_EQ(0, CountingComponent::destructor_calls);
@@ -94,7 +94,7 @@ TEST_F(game_Scene, test_destructor_not_called_when_scene_not_destroyed) {
 
 TEST_F(game_Scene, test_visitor_called_one_time_if_one_entity_created) {
   gyros::Builder<EmptyComponent> builder;
-  builder.newEntity().emplace<EmptyComponent>();
+  builder.emplace<EmptyComponent>();
   auto scene = builder.build();
 
   MockVisitor mock_visitor;
@@ -102,17 +102,5 @@ TEST_F(game_Scene, test_visitor_called_one_time_if_one_entity_created) {
     .Times(1);
   
   scene.visitReadonly<EmptyComponent>(wrap(mock_visitor));
-}
-
-TEST_F(game_Scene, test_visiting_component_tuple) {
-  gyros::Builder<EmptyComponent, CountingComponent> builder;
-  builder.newEntity().emplace<EmptyComponent>().emplace<CountingComponent>();
-  auto scene = builder.build();
-
-  MockVisitor mock_visitor;
-  EXPECT_CALL(mock_visitor, call(An<MockVisitor::TupleType const&>()))
-    .Times(1);
-  
-  scene.visitReadonly<EmptyComponent, CountingComponent>(wrap(mock_visitor));
 }
 

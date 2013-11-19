@@ -33,14 +33,14 @@ class Scene<T, L...> : private Scene<L...> {
     delete [] pool_;
   }
 
-  template <class ...ComponentTypes>
-  State<Scene<T, L...>, ComponentTypes...> const acquireReadonly() noexcept {
-    return State<Scene<T, L...>, ComponentTypes...>(*this);
+  template <class ComponentType>
+  State<ComponentType> const acquireReadonly() noexcept {
+    return State<ComponentType>(*this);
   }
 
-  template <class ...ComponentTypes, class Visitor>
+  template <class ComponentType, class Visitor>
   void visitReadonly(Visitor &&visit) {
-    for (auto const& tuple : acquireReadonly<ComponentTypes...>()) {
+    for (auto const& tuple : acquireReadonly<ComponentType>()) {
       visit(tuple);
     }
   }
@@ -59,8 +59,7 @@ class Scene<T, L...> : private Scene<L...> {
   detail::RawMemory<T> *pool_;
   size_t capacity_;
 
-  template <class SceneType, class ...ComponentTypes>
-  friend class State;
+  friend class State<T>;
   friend class detail::SceneCreator<Scene<T, L...>>;
 }; // class Scene<T, L...>
 

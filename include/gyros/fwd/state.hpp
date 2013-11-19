@@ -6,11 +6,8 @@
 
 namespace gyros {
 
-template <class SceneType, class ...ComponentTypes>
+template <class ComponentType>
 class State;
-
-template <class ...ComponentTypes>
-class StateIterator;
 
 } // namespace gyros
 
