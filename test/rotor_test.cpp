@@ -1,7 +1,7 @@
 // author: Maciej Chałapuk
 // license: MIT
 // vim: ts=2 sw=2 expandtab
-#include "gyros/scene.hpp"
+#include "gyros/component/rotor.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -60,40 +60,42 @@ MockVisitorWrapper<VisitorType> wrap(VisitorType &visitor) {
 
 using namespace test;
 using namespace testing;
+using namespace gyros::component;
 
-class game_Scene : public ::testing::TestWithParam<size_t> {
+class component_Rotor : public ::testing::TestWithParam<size_t> {
   void SetUp() {
     CountingComponent::resetCounters();
   }
 };
 
-TEST_F(game_Scene, test_constructor_called_once) {
-  gyros::Builder<CountingComponent> builder;
+TEST_F(component_Rotor, test_constructor_called_once) {
+  RotorBuilder<CountingComponent> builder;
   builder.emplace<CountingComponent>();
   auto scene = builder.build();
   
+
   ASSERT_EQ(1, CountingComponent::constructor_calls);
 }
 
-TEST_F(game_Scene, test_destructor_called_once_after_destroying_scene) {
+TEST_F(component_Rotor, test_destructor_called_once_after_destroying_scene) {
   {
-    gyros::Builder<CountingComponent> builder;
+    RotorBuilder<CountingComponent> builder;
     builder.emplace<CountingComponent>();
     auto scene = builder.build();
   }
   ASSERT_EQ(1, CountingComponent::destructor_calls);
 }
 
-TEST_F(game_Scene, test_destructor_not_called_when_scene_not_destroyed) {
-  gyros::Builder<CountingComponent> builder;
+TEST_F(component_Rotor, test_destructor_not_called_when_scene_not_destroyed) {
+  RotorBuilder<CountingComponent> builder;
   builder.emplace<CountingComponent>();
   auto scene = builder.build();
 
   ASSERT_EQ(0, CountingComponent::destructor_calls);
 }
 
-TEST_F(game_Scene, test_visitor_called_one_time_if_one_entity_created) {
-  gyros::Builder<EmptyComponent> builder;
+TEST_F(component_Rotor, test_visitor_called_one_time_if_one_entity_created) {
+  RotorBuilder<EmptyComponent> builder;
   builder.emplace<EmptyComponent>();
   auto scene = builder.build();
 

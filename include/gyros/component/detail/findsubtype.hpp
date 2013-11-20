@@ -5,6 +5,7 @@
 #define GYROS_DETAIL_FINDSUBTYPE_HPP_
 
 namespace gyros {
+namespace component {
 namespace detail {
 
 template <template <class ...> class Template,
@@ -32,6 +33,7 @@ struct FindSubtype<Template, TargetType, HeadType, TailTypes...> {
 }; // struct FindSubtype<Template, TargetType, HeadType, TailTypes...>
 
 } // namespace detail
+} // namespace component
 } // namespace gyros
 
 #endif // include guard

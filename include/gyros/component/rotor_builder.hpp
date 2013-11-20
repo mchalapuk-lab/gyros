@@ -1,53 +1,55 @@
 // author: Maciej Chałapuk
 // license: Apache2
 // vim: ts=2 sw=2 expandtab
-#ifndef GYROS_BUILDER_HPP_
-#define GYROS_BUILDER_HPP_
+#ifndef GYROS_COMPONENT_ROTOR_BUILDER_HPP_
+#define GYROS_COMPONENT_ROTOR_BUILDER_HPP_
 
 #include <vector>
 #include <functional>
 
-#include "gyros/detail/findsubtype.hpp"
-#include "gyros/detail/builder.hpp"
-#include "gyros/fwd/scene.hpp"
-#include "gyros/fwd/builder.hpp"
+#include "gyros/component/detail/findsubtype.hpp"
+#include "gyros/component/detail/rotor_builder.hpp"
+#include "gyros/fwd/component/rotor.hpp"
+#include "gyros/fwd/component/rotor_builder.hpp"
 
 namespace gyros {
+namespace component {
 
 template <class ...ComponentTypes>
-struct Builder {
+struct RotorBuilder {
 }; // struct Builder
 
 template <class T, class ...L>
-class Builder<T, L...> : private Builder<L...> {
+class RotorBuilder<T, L...> : private RotorBuilder<L...> {
  public:
-  typedef Scene<T, L...> SceneType;
+  typedef Rotor<T, L...> RotorType;
 
   template <class EmplacedComponentType, class ...ArgTypes>
-  Builder<T, L...>& emplace(ArgTypes &&... args) {
+  RotorBuilder<T, L...>& emplace(ArgTypes &&... args) {
     auto factory = std::bind(
         &detail::emplace<EmplacedComponentType, ArgTypes...>,
         std::placeholders::_1,
         std::forward<ArgTypes>(args)...
         );
-    typedef typename detail::FindSubtype<Builder,
+    typedef typename detail::FindSubtype<RotorBuilder,
                                          EmplacedComponentType,
                                          T, L...>::type BuilderType;
     static_cast<BuilderType *>(this)->factories_.push_back(factory);
     return *this;
   }
-  SceneType build() const {
-    detail::SceneCreator<SceneType, T, L...> create;
+  RotorType build() const {
+    detail::RotorCreator<RotorType, T, L...> create;
     return create(*this);
   }
 
  private:
   std::vector<std::function<T *(void *)>> factories_;
 
-  template <class SceneType, class ...ComponentTypes>
-  friend class detail::SceneCreator;
-}; // class Builder<T, L...>
+  template <class RotorType, class ...ComponentTypes>
+  friend class detail::RotorCreator;
+}; // class RotorBuilder<T, L...>
 
+} // namespace component
 } // namespace gyros
 
 #endif // include guard

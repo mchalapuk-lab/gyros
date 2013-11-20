@@ -1,29 +1,30 @@
 // author: Maciej Chałapuk
 // license: Apache2
 // vim: ts=2 sw=2 expandtab
-#ifndef GYROS_SCENE_HPP_
-#define GYROS_SCENE_HPP_
+#ifndef GYROS_COMPONENT_POOL_HPP_
+#define GYROS_COMPONENT_POOL_HPP_
 
 #include <cstddef>
 
-#include "gyros/builder.hpp"
-#include "gyros/state.hpp"
+#include "gyros/component/rotor_builder.hpp"
+#include "gyros/component/rotor_state.hpp"
 
 namespace gyros {
+namespace component {
 
-template <class ...EntityTypes>
-struct Scene {
-}; // struct Scene
+template <class ...ComponentTypes>
+struct Rotor {
+}; // struct Rotor
 
 template <class T, class ...L>
-class Scene<T, L...> : private Scene<L...> {
+class Rotor<T, L...> : private Rotor<L...> {
  public:
-  Scene(Scene<T, L...> &&rhs) noexcept
-    : Scene<L...>(std::move(rhs)),
+  Rotor(Rotor<T, L...> &&rhs) noexcept
+    : Rotor<L...>(std::move(rhs)),
     pool_(rhs.pool_),
     capacity_(rhs.capacity_) {
   }
-  ~Scene() {
+  ~Rotor() {
     if (!capacity_) {
       return; // in case if moved
     }
@@ -34,8 +35,8 @@ class Scene<T, L...> : private Scene<L...> {
   }
 
   template <class ComponentType>
-  State<ComponentType> const acquireReadonly() noexcept {
-    return State<ComponentType>(*this);
+  RotorState<ComponentType> const acquireReadonly() noexcept {
+    return RotorState<ComponentType>(*this);
   }
 
   template <class ComponentType, class Visitor>
@@ -47,10 +48,10 @@ class Scene<T, L...> : private Scene<L...> {
 
  protected:
   template <class ...ArgTypes>
-  Scene(detail::RawMemory<T> *pool_start,
+  Rotor(detail::RawMemory<T> *pool_start,
         size_t pool_capacity,
         ArgTypes &&...next_pool_info)
-    : Scene<L...>(next_pool_info...),
+    : Rotor<L...>(next_pool_info...),
     pool_(pool_start),
     capacity_(pool_capacity) {
   }
@@ -59,10 +60,11 @@ class Scene<T, L...> : private Scene<L...> {
   detail::RawMemory<T> *pool_;
   size_t capacity_;
 
-  friend class State<T>;
-  friend class detail::SceneCreator<Scene<T, L...>>;
-}; // class Scene<T, L...>
+  friend class RotorState<T>;
+  friend class detail::RotorCreator<Rotor<T, L...>>;
+}; // class Rotor<T, L...>
 
+} // namespace component
 } // namespace gyros
 
 #endif // include guard
