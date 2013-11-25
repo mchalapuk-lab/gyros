@@ -3,64 +3,17 @@
 // vim: ts=2 sw=2 expandtab
 #include "gyros/component/rotor.hpp"
 
+#include "test/gyros/components.hpp"
+#include "test/gyros/component/mock_visitor.hpp"
+#include "test/gyros/visitor_wrapper.hpp"
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-namespace test {
-
-struct EmptyComponent {
-}; // struct EmptyComponent
-
-struct CountingComponent : public EmptyComponent {
-  static size_t constructor_calls;
-  static size_t destructor_calls;
-  static void resetCounters() {
-    constructor_calls = destructor_calls = 0;
-  }
-
-  CountingComponent()
-    : id_(constructor_calls++) {
-  }
-  ~CountingComponent() {
-    destructor_calls += 1;
-  }
-  size_t id_;
-}; // CountingEmptyComponent
-
-size_t CountingComponent::constructor_calls = 0;
-size_t CountingComponent::destructor_calls = 0;
-
-struct MockVisitor {
-  typedef std::tuple<EmptyComponent const&, CountingComponent const&> TupleType;
-
-  MOCK_METHOD1(call, void(EmptyComponent const&));
-  MOCK_METHOD1(call, void(CountingComponent const&));
-  MOCK_METHOD1(call, void(TupleType const&));
-}; // struct MockVisitor
-
-template <class VisitorType>
-class MockVisitorWrapper {
- public:
-  MockVisitorWrapper(VisitorType &visitor) : delegate_(visitor) {
-  }
-  template <class Type>
-  void operator() (Type &obj) {
-    delegate_.call(obj);
-  }
- private:
-  VisitorType &delegate_;
-}; // struct MockVisitorWrapper
-
-template <class VisitorType>
-MockVisitorWrapper<VisitorType> wrap(VisitorType &visitor) {
-  return MockVisitorWrapper<VisitorType>(visitor);
-}
-
-} // namespace test
-
-using namespace test;
-using namespace testing;
 using namespace gyros::component;
+using namespace test::gyros;
+using namespace test::gyros::component;
+using namespace testing;
 
 class component_Rotor : public ::testing::TestWithParam<size_t> {
   void SetUp() {
@@ -71,25 +24,24 @@ class component_Rotor : public ::testing::TestWithParam<size_t> {
 TEST_F(component_Rotor, test_constructor_called_once) {
   RotorBuilder<CountingComponent> builder;
   builder.emplace<CountingComponent>();
-  auto scene = builder.build();
-  
+  auto rotor = builder.build();
 
   ASSERT_EQ(1, CountingComponent::constructor_calls);
 }
 
-TEST_F(component_Rotor, test_destructor_called_once_after_destroying_scene) {
+TEST_F(component_Rotor, test_destructor_called_once_after_destroying_rotor) {
   {
     RotorBuilder<CountingComponent> builder;
     builder.emplace<CountingComponent>();
-    auto scene = builder.build();
+    auto rotor = builder.build();
   }
   ASSERT_EQ(1, CountingComponent::destructor_calls);
 }
 
-TEST_F(component_Rotor, test_destructor_not_called_when_scene_not_destroyed) {
+TEST_F(component_Rotor, test_destructor_not_called_when_rotor_not_destroyed) {
   RotorBuilder<CountingComponent> builder;
   builder.emplace<CountingComponent>();
-  auto scene = builder.build();
+  auto rotor = builder.build();
 
   ASSERT_EQ(0, CountingComponent::destructor_calls);
 }
@@ -97,12 +49,12 @@ TEST_F(component_Rotor, test_destructor_not_called_when_scene_not_destroyed) {
 TEST_F(component_Rotor, test_visitor_called_one_time_if_one_entity_created) {
   RotorBuilder<EmptyComponent> builder;
   builder.emplace<EmptyComponent>();
-  auto scene = builder.build();
+  auto rotor = builder.build();
 
   MockVisitor mock_visitor;
   EXPECT_CALL(mock_visitor, call(An<EmptyComponent const&>()))
     .Times(1);
   
-  scene.visitReadonly<EmptyComponent>(wrap(mock_visitor));
+  rotor.visitReadonly<EmptyComponent>(wrap(mock_visitor));
 }
 
