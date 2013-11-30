@@ -8,7 +8,7 @@
 
 #include "gyros/component/rotor_builder.hpp"
 #include "gyros/component/rotor_state.hpp"
-#include "gyros/component/position_iterator.hpp"
+#include "gyros/component/iterator.hpp"
 
 namespace gyros {
 namespace component {

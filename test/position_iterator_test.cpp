@@ -1,7 +1,7 @@
 // author: Maciej Chałapuk
 // license: MIT
 // vim: ts=2 sw=2 expandtab
-#include "gyros/component/position_iterator.hpp"
+#include "gyros/component/iterator.hpp"
 
 #include <gtest/gtest.h>
 
@@ -112,10 +112,11 @@ TEST_P(component_PositionIterator, test_diff_after_postdecrementing) {
   ASSERT_EQ(-steps, diff);
 }
 
-ptrdiff_t diffs[] = { -1, 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048};
-INSTANTIATE_TEST_CASE_P(DifferenceTests,
-                        component_PositionIterator,
-                        ::testing::ValuesIn(diffs));
+INSTANTIATE_TEST_CASE_P(
+    DiffTests,
+    component_PositionIterator,
+    ValuesIn((ptrdiff_t[]) { -1,0,1,2,4,8,16,32,64,128,256,512,1024,2048 })
+    );
 
 TEST_F(component_PositionIterator, test_equals_operator) {
   auto first = PositionIterator<EmptyComponent>(nullptr);

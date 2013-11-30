@@ -7,7 +7,7 @@
 namespace gyros {
 namespace component {
 
-template <class ...EntityTypes>
+template <class ...ComponentTypes>
 struct Rotor;
 
 } // namespace component
