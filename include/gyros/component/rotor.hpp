@@ -1,13 +1,14 @@
 // author: Maciej Chałapuk
 // license: Apache2
 // vim: ts=2 sw=2 expandtab
-#ifndef GYROS_COMPONENT_POOL_HPP_
-#define GYROS_COMPONENT_POOL_HPP_
+#ifndef GYROS_COMPONENT_ROTOR_HPP_
+#define GYROS_COMPONENT_ROTOR_HPP_
 
 #include <cstddef>
 
 #include "gyros/component/rotor_builder.hpp"
 #include "gyros/component/rotor_state.hpp"
+#include "gyros/component/position_iterator.hpp"
 
 namespace gyros {
 namespace component {
@@ -29,21 +30,25 @@ class Rotor<T, L...> : private Rotor<L...> {
       return; // in case if moved
     }
     for (auto it = pool_, end = it + capacity_; it != end; ++it) {
-      reinterpret_cast<T *>(it)->~T();
+      it->~T();
     }
-    delete [] pool_;
+    delete [] reinterpret_cast<detail::RawMemory<T> *>(pool_);
+  }
+
+  PositionIterator<T> begin() const {
+    return begin<T>();
+  }
+  PositionIterator<T> const end() const {
+    return end<T>();
   }
 
   template <class ComponentType>
-  RotorState<ComponentType> const acquireReadonly() noexcept {
-    return RotorState<ComponentType>(*this);
+  PositionIterator<ComponentType> begin() const {
+    return begin(static_cast<ComponentType *>(nullptr));
   }
-
-  template <class ComponentType, class Visitor>
-  void visitReadonly(Visitor &&visit) {
-    for (auto const& tuple : acquireReadonly<ComponentType>()) {
-      visit(tuple);
-    }
+  template <class ComponentType>
+  PositionIterator<ComponentType> const end() const {
+    return end(static_cast<ComponentType *>(nullptr));
   }
 
  protected:
@@ -52,13 +57,20 @@ class Rotor<T, L...> : private Rotor<L...> {
         size_t pool_capacity,
         ArgTypes &&...next_pool_info)
     : Rotor<L...>(next_pool_info...),
-    pool_(pool_start),
+    pool_(reinterpret_cast<T*>(pool_start)),
     capacity_(pool_capacity) {
   }
 
+  PositionIterator<T> begin(T*) const {
+    return PositionIterator<T>(pool_);
+  }
+  PositionIterator<T> const end(T*) const {
+    return PositionIterator<T>(pool_) + capacity_;
+  }
+
  private:
-  detail::RawMemory<T> *pool_;
-  size_t capacity_;
+  T *const pool_;
+  size_t const capacity_;
 
   friend class RotorState<T>;
   friend class detail::RotorCreator<Rotor<T, L...>>;

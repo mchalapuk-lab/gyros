@@ -46,15 +46,12 @@ TEST_F(component_Rotor, test_destructor_not_called_when_rotor_not_destroyed) {
   ASSERT_EQ(0, CountingComponent::destructor_calls);
 }
 
-TEST_F(component_Rotor, test_visitor_called_one_time_if_one_entity_created) {
+TEST_F(component_Rotor, test_position_iterator_difference) {
   RotorBuilder<EmptyComponent> builder;
   builder.emplace<EmptyComponent>();
   auto rotor = builder.build();
 
-  MockVisitor mock_visitor;
-  EXPECT_CALL(mock_visitor, call(An<EmptyComponent const&>()))
-    .Times(1);
-  
-  rotor.visitReadonly<EmptyComponent>(wrap(mock_visitor));
+  ptrdiff_t diff = rotor.end() - rotor.begin();
+  ASSERT_EQ(1L, diff);
 }
 

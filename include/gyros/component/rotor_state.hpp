@@ -21,19 +21,19 @@ class RotorState {
   }
 
   T* begin() {
-    return reinterpret_cast<T *>(pool_);
+    return pool_;
   }
   T* end() {
-    return begin() + capacity_;
+    return pool_ + capacity_;
   }
   T const* begin() const {
-    return reinterpret_cast<T const*>(pool_);
+    return pool_;
   }
   T const* end() const {
-    return begin() + capacity_;
+    return pool_ + capacity_;
   }
  private:
-  detail::RawMemory<T> *pool_;
+  T *pool_;
   size_t capacity_;
 }; // class RotorState<T>
 
