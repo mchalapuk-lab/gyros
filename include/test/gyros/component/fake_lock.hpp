@@ -8,14 +8,21 @@ namespace test {
 namespace gyros {
 namespace component {
 
-template <ptrdiff_t read_offset__ = 0, ptrdiff_t write_offset__ = 0>
 struct FakeLock {
+  FakeLock(ptrdiff_t read_offset = 0, ptrdiff_t write_offset = 0)
+      : read_offset_(read_offset),
+      write_offset_(write_offset) {
+      }
+
   ptrdiff_t read_offset() const {
-    return read_offset__;
+    return read_offset_;
   }
   ptrdiff_t write_offset() const {
-    return write_offset__;
+    return write_offset_;
   }
+ private:
+  ptrdiff_t read_offset_;
+  ptrdiff_t write_offset_;
 }; // struct FakeLock
 
 } // namespace component

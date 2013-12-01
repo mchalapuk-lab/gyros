@@ -115,7 +115,7 @@ TEST_P(component_PositionIterator, test_diff_after_postdecrementing) {
 INSTANTIATE_TEST_CASE_P(
     DiffTests,
     component_PositionIterator,
-    ValuesIn((ptrdiff_t[]) { -1,0,1,2,4,8,16,32,64,128,256,512,1024,2048 })
+    ValuesIn((ptrdiff_t[]) { -1, 0, 1, 8, 2048 })
     );
 
 TEST_F(component_PositionIterator, test_equals_operator) {
