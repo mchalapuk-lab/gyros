@@ -52,6 +52,32 @@ TEST_F(component_Rotor, test_position_iterator_difference) {
   auto rotor = builder.build();
 
   ptrdiff_t diff = rotor.end() - rotor.begin();
-  ASSERT_EQ(1L, diff);
+  ASSERT_EQ(1, diff);
+}
+
+TEST_F(component_Rotor, test_dereferencing_after_upgrade_readonly) {
+  typedef OneMemberComponent<int> TestedComponent;
+  int value = 8;
+
+  RotorBuilder<TestedComponent> builder;
+  builder.emplace<TestedComponent>(value);
+  auto rotor = builder.build();
+
+  auto it = rotor.upgradeReadOnly(rotor.begin());
+  auto const& dereferenced = *it;
+  ASSERT_EQ(value, dereferenced.member_);
+}
+
+TEST_F(component_Rotor, test_dereferencing_after_upgrade_readwrite) {
+  typedef OneMemberComponent<int> TestedComponent;
+  int value = 8;
+
+  RotorBuilder<TestedComponent> builder;
+  builder.emplace<TestedComponent>(value);
+  auto rotor = builder.build();
+
+  auto it = rotor.upgradeReadWrite(rotor.begin());
+  auto const& dereferenced = *it;
+  ASSERT_EQ(value, dereferenced.member_);
 }
 

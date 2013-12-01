@@ -31,6 +31,11 @@ struct CountingComponent {
 
 template <class MemberType>
 struct OneMemberComponent {
+  OneMemberComponent() {
+  }
+  OneMemberComponent(MemberType member)
+      : member_(member) {
+  }
   MemberType member_;
 }; // struct OneMemberComponent
 

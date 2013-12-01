@@ -20,6 +20,10 @@ struct Rotor {
 template <class T, class ...L>
 class Rotor<T, L...> : private Rotor<L...> {
  public:
+  typedef std::shared_ptr<std::nullptr_t> Unlocker;
+  typedef ReadingIterator<T, Unlocker> ReadOnlyIterator;
+  typedef WritingIterator<T, Unlocker> ReadWriteIterator;
+
   Rotor(Rotor<T, L...> &&rhs) noexcept
     : Rotor<L...>(std::move(rhs)),
     pool_(rhs.pool_),
@@ -35,20 +39,29 @@ class Rotor<T, L...> : private Rotor<L...> {
     delete [] reinterpret_cast<detail::RawMemory<T> *>(pool_);
   }
 
-  PositionIterator<T> begin() const {
+  PositionIterator<T> begin() const noexcept {
     return begin<T>();
   }
-  PositionIterator<T> const end() const {
+  PositionIterator<T> const end() const noexcept {
     return end<T>();
   }
 
   template <class ComponentType>
-  PositionIterator<ComponentType> begin() const {
+  PositionIterator<ComponentType> begin() const noexcept {
     return begin(static_cast<ComponentType *>(nullptr));
   }
   template <class ComponentType>
-  PositionIterator<ComponentType> const end() const {
+  PositionIterator<ComponentType> const end() const noexcept {
     return end(static_cast<ComponentType *>(nullptr));
+  }
+
+  ReadOnlyIterator const upgradeReadOnly(PositionIterator<T> it) const {
+    ptrdiff_t index = it - begin();
+    return ReadOnlyIterator(pool_ + index, unlocker([] () {}));
+  }
+  ReadWriteIterator upgradeReadWrite(PositionIterator<T> it) const {
+    ptrdiff_t index = it - begin();
+    return ReadWriteIterator(pool_ + index, 0, unlocker([] () {}));
   }
 
  protected:
@@ -68,11 +81,14 @@ class Rotor<T, L...> : private Rotor<L...> {
     return PositionIterator<T>(pool_) + capacity_;
   }
 
+  template <class Functor>
+  Unlocker unlocker(Functor func) const {
+    return Unlocker(nullptr, [func] (std::nullptr_t) { func(); });
+  }
  private:
   T *const pool_;
   size_t const capacity_;
 
-  friend class RotorState<T>;
   friend class detail::RotorCreator<Rotor<T, L...>>;
 }; // class Rotor<T, L...>
 
