@@ -4,25 +4,21 @@
 #ifndef TEST_GYROS_COMPONENT_FAKE_LOCK_HPP_
 #define TEST_GYROS_COMPONENT_FAKE_LOCK_HPP_
 
+#include <memory>
+
 namespace test {
 namespace gyros {
 namespace component {
 
 struct FakeLock {
-  FakeLock(ptrdiff_t read_offset = 0, ptrdiff_t write_offset = 0)
-      : read_offset_(read_offset),
-      write_offset_(write_offset) {
-      }
-
-  ptrdiff_t read_offset() const {
-    return read_offset_;
+  template <class Deleter>
+  FakeLock(Deleter deleter)
+      : shared_(nullptr, [deleter] (std::nullptr_t) { deleter(); }) {
   }
-  ptrdiff_t write_offset() const {
-    return write_offset_;
+  FakeLock() {
   }
  private:
-  ptrdiff_t read_offset_;
-  ptrdiff_t write_offset_;
+  std::shared_ptr<void> shared_;
 }; // struct FakeLock
 
 } // namespace component

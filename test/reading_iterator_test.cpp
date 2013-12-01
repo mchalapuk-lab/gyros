@@ -7,9 +7,11 @@
 
 #include "test/gyros/components.hpp"
 #include "test/gyros/component/fake_lock.hpp"
+#include "test/mock_functor.hpp"
 
 using namespace gyros::component;
 using namespace test::gyros::component;
+using namespace test;
 using namespace testing;
 
 typedef ReadingIterator<EmptyComponent, FakeLock> TestedIterator;
@@ -115,16 +117,6 @@ TEST_P(component_ReadingIterator, test_diff_after_postdecrementing) {
   ASSERT_EQ(-steps, diff);
 }
 
-TEST_P(component_ReadingIterator, test_read_offset) {
-  ptrdiff_t read_offset = GetParam();
-  EmptyComponent component;
-
-  auto it = TestedIterator(&component - read_offset, FakeLock(read_offset));
-  auto const& dereferenced = *it;
-
-  ASSERT_EQ(&(component), &(dereferenced));
-}
-
 INSTANTIATE_TEST_CASE_P(
     DiffTests,
     component_ReadingIterator,
@@ -202,5 +194,23 @@ TEST_F(component_ReadingIterator, test_dereference) {
   auto const& dereferenced = *it;
 
   ASSERT_EQ(&(component), &(dereferenced));
+}
+
+TEST_F(component_ReadingIterator, test_last_lock_destoyed_with_last_iterator) {
+  EmptyComponent component;
+  MockFunctor functor;
+  {
+    auto it0 = TestedIterator(&component, FakeLock(wrap(functor)));
+    {
+      auto it1 = it0;
+      {
+        auto it2 = it1;
+        Mock::VerifyAndClearExpectations(&functor);
+      }
+      Mock::VerifyAndClearExpectations(&functor);
+    }
+    Mock::VerifyAndClearExpectations(&functor);
+    EXPECT_CALL(functor, call());
+  }
 }
 

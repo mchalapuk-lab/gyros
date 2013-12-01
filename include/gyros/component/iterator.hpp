@@ -102,7 +102,7 @@ class ReadingIterator :
   }
 
   ComponentType const& operator* () const {
-    return *(ptr_ + lock_.read_offset());
+    return *ptr_;
   }
 
   void increment(ptrdiff_t diff) {
