@@ -13,7 +13,7 @@ namespace component {
 struct EmptyComponent {
 }; // struct EmptyComponent
 
-struct CountingComponent : public EmptyComponent {
+struct CountingComponent {
   static size_t constructor_calls;
   static size_t destructor_calls;
   static void resetCounters() {
@@ -27,7 +27,12 @@ struct CountingComponent : public EmptyComponent {
     destructor_calls += 1;
   }
   size_t id_;
-}; // CountingComponent
+}; // struct CountingComponent
+
+template <class MemberType>
+struct OneMemberComponent {
+  MemberType member_;
+}; // struct OneMemberComponent
 
 } // namespace component
 } // namespace gyros

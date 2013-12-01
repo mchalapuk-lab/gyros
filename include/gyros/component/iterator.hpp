@@ -5,6 +5,7 @@
 #define GYROS_COMPONENT_POSITION_ITERATOR_HPP_
 
 #include <cstddef>
+#include <memory>
 
 #include "gyros/fwd/component/iterator.hpp"
 
@@ -125,16 +126,18 @@ class WritingIterator :
  public:
   typedef WritingIterator<ComponentType, LockType> IteratorType;
 
-  WritingIterator(ComponentType const* ptr, LockType lock)
-      : ptr_(ptr), lock_(lock) {
+  WritingIterator(ComponentType *ptr,
+                  ptrdiff_t write_offset,
+                  LockType lock)
+      : ptr_(ptr), data_(new Data{write_offset, lock}) {
   }
 
   ComponentType const& operator* () const {
-    return *(ptr_ + lock_.read_offset());
+    return *ptr_;
   }
   template <class WritingVisitorType>
   void visit(WritingVisitorType visit) {
-    return visit(**this, *(ptr_ + lock_.write_offset()));
+    return visit(**this, *(ptr_ + data_->write_offset_));
   }
 
   void increment(ptrdiff_t diff) {
@@ -147,9 +150,14 @@ class WritingIterator :
     return ptr_ == rhs.ptr_;
   }
  private:
-  ComponentType const* ptr_;
-  LockType lock_;
-}; // class ReadingIterator
+  struct Data {
+    ptrdiff_t write_offset_;
+    LockType lock_;
+  };
+
+  ComponentType *ptr_;
+  std::shared_ptr<Data> data_;
+}; // class WritingIterator
 
 } // namespace component
 } // namespace gyros

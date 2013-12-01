@@ -5,6 +5,7 @@ add_executable (${PROJECT_NAME}-tests
   components.cpp
   position_iterator_test.cpp
   reading_iterator_test.cpp
+  writing_iterator_test.cpp
   rotor_test.cpp
 )
 target_link_libraries (${PROJECT_NAME}-tests gmock pthread)
