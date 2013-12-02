@@ -12,9 +12,9 @@ class MockVisitorWrapper {
  public:
   MockVisitorWrapper(VisitorType &visitor) : delegate_(visitor) {
   }
-  template <class Type>
-  void operator() (Type &obj) {
-    delegate_.call(obj);
+  template <class ...Types>
+  void operator() (Types&&... obj) {
+    delegate_.call(std::forward<Types>(obj)...);
   }
  private:
   VisitorType &delegate_;

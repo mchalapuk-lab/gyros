@@ -5,6 +5,7 @@
 #define TEST_GYROS_COMPONENTS_HPP_
 
 #include <cstdlib>
+#include <gmock/gmock.h>
 
 namespace test {
 namespace gyros {
@@ -38,6 +39,10 @@ struct OneMemberComponent {
   }
   MemberType member_;
 }; // struct OneMemberComponent
+
+struct MockComponent {
+  MOCK_CONST_METHOD0(method, void());
+}; // struct MockComponent
 
 } // namespace component
 } // namespace gyros

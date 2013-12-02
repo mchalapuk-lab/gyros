@@ -88,74 +88,53 @@ class PositionIterator : public IteratorFacade<PositionIterator<ComponentType>> 
   bool equals(PositionIterator<ComponentType> const& rhs) const {
     return ptr_ == rhs.ptr_;
   }
- private:
+ protected:
   ComponentType const* ptr_;
 }; // class PositionIterator
 
 template <class ComponentType, class LockType>
-class ReadingIterator :
-    public IteratorFacade<ReadingIterator<ComponentType, LockType>> {
+class ReadingIterator : public PositionIterator<ComponentType> {
  public:
-  typedef ReadingIterator<ComponentType, LockType> IteratorType;
-
   ReadingIterator(ComponentType const* ptr, LockType lock)
-      : ptr_(ptr), lock_(lock) {
+      : PositionIterator<ComponentType>(ptr), lock_(lock) {
   }
 
   ComponentType const& operator* () const {
-    return *ptr_;
+    return *this->ptr_;
   }
-
-  void increment(ptrdiff_t diff) {
-    ptr_ += diff;
-  }
-  ptrdiff_t difference(IteratorType const& rhs) const {
-    return ptr_ - rhs.ptr_;
-  }
-  bool equals(IteratorType const& rhs) const {
-    return ptr_ == rhs.ptr_;
+  ComponentType const* operator->() const {
+    return this->ptr_;
   }
  private:
-  ComponentType const* ptr_;
   LockType lock_;
 }; // class ReadingIterator
 
 template <class ComponentType, class LockType>
-class WritingIterator :
-    public IteratorFacade<WritingIterator<ComponentType, LockType>> {
+class WritingIterator : public PositionIterator<ComponentType> {
  public:
   typedef WritingIterator<ComponentType, LockType> IteratorType;
 
   WritingIterator(ComponentType *ptr,
                   ptrdiff_t write_offset,
                   LockType lock)
-      : ptr_(ptr), data_(new Data{write_offset, lock}) {
+      : PositionIterator<ComponentType>(ptr),
+      data_(new Data{write_offset, lock}) {
   }
 
-  ComponentType const& operator* () const {
-    return *ptr_;
-  }
   template <class WritingVisitorType>
   void visit(WritingVisitorType visit) {
-    return visit(**this, *(ptr_ + data_->write_offset_));
+    return visit(
+        *this->ptr_,
+        *const_cast<ComponentType*>(this->ptr_ + data_->write_offset_)
+        );
   }
 
-  void increment(ptrdiff_t diff) {
-    ptr_ += diff;
-  }
-  ptrdiff_t difference(IteratorType const& rhs) const {
-    return ptr_ - rhs.ptr_;
-  }
-  bool equals(IteratorType const& rhs) const {
-    return ptr_ == rhs.ptr_;
-  }
  private:
   struct Data {
     ptrdiff_t write_offset_;
     LockType lock_;
   };
 
-  ComponentType *ptr_;
   std::shared_ptr<Data> data_;
 }; // class WritingIterator
 

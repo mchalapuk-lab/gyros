@@ -68,16 +68,22 @@ TEST_F(component_Rotor, test_dereferencing_after_upgrade_readonly) {
   ASSERT_EQ(value, dereferenced.member_);
 }
 
-TEST_F(component_Rotor, test_dereferencing_after_upgrade_readwrite) {
-  typedef OneMemberComponent<int> TestedComponent;
+TEST_F(component_Rotor, test_write_point_different_that_read) {
   int value = 8;
 
-  RotorBuilder<TestedComponent> builder;
-  builder.emplace<TestedComponent>(value);
+  RotorBuilder<EmptyComponent> builder;
+  builder.emplace<EmptyComponent>();
   auto rotor = builder.build();
 
   auto it = rotor.upgradeReadWrite(rotor.begin());
-  auto const& dereferenced = *it;
-  ASSERT_EQ(value, dereferenced.member_);
+  auto assertion = [] (EmptyComponent const& from, EmptyComponent &to) {
+    ASSERT_NE(&from, &to);
+  };
+
+  MockVisitor visitor;
+  EXPECT_CALL(visitor, call(Matcher<EmptyComponent const&>(_),
+                            Matcher<EmptyComponent&>(_)))
+      .WillOnce(Invoke(assertion));
+  it.visit(wrap(visitor));
 }
 
