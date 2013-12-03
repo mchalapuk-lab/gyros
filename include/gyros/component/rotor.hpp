@@ -7,7 +7,7 @@
 #include <cstddef>
 
 #include "gyros/component/rotor_builder.hpp"
-#include "gyros/component/rotor_state.hpp"
+#include "gyros/component/rotor_mutex.hpp"
 #include "gyros/component/iterator.hpp"
 
 namespace gyros {
@@ -88,6 +88,7 @@ class Rotor<T, L...> : private Rotor<L...> {
  private:
   T *const pool_;
   size_t const capacity_;
+  RotorMutex<> mutex_;
 
   friend class detail::RotorCreator<Rotor<T, L...>>;
 }; // class Rotor<T, L...>
