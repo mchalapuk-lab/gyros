@@ -6,9 +6,8 @@
 
 #include <mutex>
 #include <functional>
-#include <algorithm>
 #include <vector>
-#include <map>
+#include <queue>
 
 namespace gyros {
 namespace component {
@@ -30,102 +29,90 @@ class Lock {
   std::function<void ()> deleter_;
 }; // class Lock
 
-struct DereferencingComparator {
-  template <class IteratorType>
-  bool operator() (IteratorType lhs, IteratorType rhs) const {
-    return *lhs - *rhs;
-  }
-}; // struct DereferencingComparator
-
 template <size_t n_states__ = 3>
 class RotorMutex {
  public:
-  RotorMutex() : state_versions_(n_states__), last_version_(0) {
-    free_states_.reserve(n_states__);
+  RotorMutex()
+      : states_(n_states__) {
 
-    std::fill(state_versions_.begin(), state_versions_.end(), 0);
-    for (auto it = state_versions_.begin(),
-         end = state_versions_.end(); it != end; ++it) {
-      pushHeap(free_states_, it);
-      reader_count_.insert(std::make_pair(it, 0));
+    std::fill(states_.begin(), states_.end(), StateInfo{0, 0});
+    for (auto it = states_.begin(),end = states_.end(); it != end; ++it) {
+      free_.push(it);
     }
   }
 
-  Lock acquireReadOnly(size_t *read_index, size_t *state_version) {
-    std::unique_lock<std::mutex> lock(mutex_);
-    StatePointer read_state = mostFreshReadOnly();
-    lock.unlock();
-
-    *read_index = read_state - state_versions_.begin();
-    *state_version = *read_state;
-
-    return Lock([this, read_state] () {
-                  std::lock_guard<std::mutex> lock(mutex_);
-                  freeAfterRead(read_state);
-                });
-  }
+  Lock acquireReadOnly(size_t *read_index,
+                       size_t *state_version);
   Lock acquireReadWrite(size_t *read_index, 
                         size_t *state_version,
-                        size_t *write_index) {
-    std::unique_lock<std::mutex> lock(mutex_);
-    StatePointer write_state = leastFreshReadWrite();
-    StatePointer read_state = mostFreshReadOnly();
-    lock.unlock();
-
-    *read_index = read_state - state_versions_.begin();
-    *state_version = *read_state;
-    *write_index = write_state - state_versions_.begin();
-  
-    return Lock([this, read_state, write_state] () {
-                  std::lock_guard<std::mutex> lock(mutex_);
-                  freeAfterRead(read_state);
-                  freeAfterWrite(write_state);
-                });
-  }
+                        size_t *write_index);
  private:
-  typedef std::vector<size_t>::iterator StatePointer;
+  struct StateInfo {
+    size_t state_version_;
+    size_t reader_count_;
+  }; // struct StateInfo
+
+  typedef typename std::vector<StateInfo>::iterator StateIterator;
 
   std::mutex mutex_;
-  std::vector<size_t> state_versions_;
-  std::vector<StatePointer> free_states_;
-  std::map<StatePointer, size_t> reader_count_;
-  size_t last_version_;
+  std::vector<StateInfo> states_;
+  std::queue<StateIterator> free_;
 
-  StatePointer mostFreshReadOnly() {
-    auto state = peekHeap(free_states_);
-    // TODO check if one of already read states is more up to date
-    popHeap(free_states_);
-    reader_count_.at(state) += 1;
+  StateIterator mostFreshReadOnly() {
+    auto state = free_.back();
+    state->reader_count_ += 1;
     return state;
   }
-  StatePointer leastFreshReadWrite() {
-    auto state = peekHeap(free_states_);
-    popHeap(free_states_);
+  StateIterator leastFreshReadWrite() {
+    auto state = free_.front();
+    free_.pop();
     return state;
   }
 
-  void freeAfterRead(StatePointer state) {
-    if (--reader_count_.at(state) == 0) {
-      pushHeap(free_states_, state);
-    }
+  void freeAfterRead(StateIterator state) {
+    state->reader_count_ -= 1;
   }
-  void freeAfterWrite(StatePointer state) {
-    *state = ++last_version_;
-    pushHeap(free_states_, state);
-  }
-
-  static void pushHeap(std::vector<StatePointer> heap, StatePointer state) {
-    heap.push_back(state);
-    std::push_heap(heap.begin(), heap.end(), DereferencingComparator());
-  }
-  static StatePointer peekHeap(std::vector<StatePointer> heap) {
-    return heap.front();
-  }
-  static void popHeap(std::vector<StatePointer> heap) {
-    std::pop_heap(heap.begin(), heap.end(), DereferencingComparator());
-    heap.pop_back();
+  void freeAfterWrite(StateIterator state) {
+    state->state_version_ = free_.back().state_version_ + 1;
+    free_.push(state);
   }
 }; // class RotorMutex<n_states__>
+
+template <size_t n_states__>
+Lock RotorMutex<n_states__>::acquireReadOnly(size_t *read_index,
+                                             size_t *state_version) {
+  std::unique_lock<std::mutex> lock(mutex_);
+  StateIterator read_state = mostFreshReadOnly();
+  lock.unlock();
+
+  *read_index = read_state - states_.begin();
+  *state_version = *read_state;
+
+  return Lock([this, read_state] () {
+                std::lock_guard<std::mutex> lock(mutex_);
+                freeAfterRead(read_state);
+              });
+}
+
+template <size_t n_states__>
+Lock RotorMutex<n_states__>::acquireReadWrite(size_t *read_index, 
+                                              size_t *state_version,
+                                              size_t *write_index) {
+  std::unique_lock<std::mutex> lock(mutex_);
+  StateIterator write_state = leastFreshReadWrite();
+  StateIterator read_state = mostFreshReadOnly();
+  lock.unlock();
+
+  *read_index = read_state - states_.begin();
+  *state_version = *read_state;
+  *write_index = write_state - states_.begin();
+
+  return Lock([this, read_state, write_state] () {
+                std::lock_guard<std::mutex> lock(mutex_);
+                freeAfterRead(read_state);
+                freeAfterWrite(write_state);
+              });
+}
 
 } // namespace component
 } // namespace gyros
