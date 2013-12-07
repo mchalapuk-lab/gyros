@@ -30,6 +30,9 @@ class Lock {
   std::function<void ()> deleter_;
 }; // class Lock
 
+/**
+ * State locking and unlocking operations are constant time.
+ */
 template <size_t n_states__ = 3>
 class RotorMutex {
   static_assert(n_states__ >= 3, "state count must be at least 3");
@@ -81,9 +84,12 @@ class RotorMutex {
 
   void freeAfterRead(StateIterator state) {
     if (--state->reader_count_ == 0) {
-      auto it = free_.begin();
-      for ( ; state->state_version_ > (*it)->state_version_; ++it);
-      free_.insert(it, state);
+      if (state == most_fresh_) {
+        free_.push_front(state);
+      } else {
+        // not most fresh so can be downgraded
+        free_.push_back(state);
+      }
     }
   }
   void freeAfterWrite(StateIterator state) {

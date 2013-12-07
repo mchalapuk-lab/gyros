@@ -5,6 +5,8 @@
 
 #include <gtest/gtest.h>
 
+#include <memory>
+
 using namespace gyros::component;
 using namespace testing;
 
@@ -191,6 +193,34 @@ TEST_F(component_RotorMutex,
   }
   auto lock3 = mutex.acquireReadWrite(&unused, &state_version1, &unused);
   ASSERT_EQ(state_version0 + 3, state_version1);
+}
+
+TEST_F(component_RotorMutex,
+       test_same_version_when_relock_ro_with_rw_locked_between_ro_lock_unlock) {
+  RotorMutex<3> mutex;
+  size_t state_version0, state_version1, unused;
+  std::unique_ptr<Lock> lock0(
+      new Lock(mutex.acquireReadOnly(&unused, &state_version0))
+      );
+  auto lock1 = mutex.acquireReadWrite(&unused, &unused, &unused);
+  lock0.reset();
+  auto lock2 = mutex.acquireReadOnly(&unused, &state_version1);
+  ASSERT_EQ(state_version0, state_version1);
+}
+
+TEST_F(component_RotorMutex,
+       test_same_version_when_relock_ro_with_rw_unlocked_between_ro_lock_unlo) {
+  RotorMutex<3> mutex;
+  size_t state_version0, state_version1, unused;
+  std::unique_ptr<Lock> lock0(
+      new Lock(mutex.acquireReadOnly(&unused, &state_version0))
+      );
+  {
+    auto lock1 = mutex.acquireReadWrite(&unused, &unused, &unused);
+  }
+  lock0.reset();
+  auto lock2 = mutex.acquireReadOnly(&unused, &state_version1);
+  ASSERT_NE(state_version0, state_version1);
 }
 
 TEST_F(component_RotorMutex,
