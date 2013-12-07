@@ -4,31 +4,15 @@
 #ifndef GYROS_COMPONENT_ROTOR_MUTEX_HPP_
 #define GYROS_COMPONENT_ROTOR_MUTEX_HPP_
 
+#include "gyros/component/rotor_lock.hpp"
+
 #include <mutex>
-#include <functional>
 #include <vector>
 #include <deque>
 #include <stdexcept>
 
 namespace gyros {
 namespace component {
-
-class Lock {
- public:
-  template <class Deleter>
-  Lock(Deleter deleter)
-      : deleter_(deleter) {
-  }
-  Lock(Lock const&) = delete;
-  Lock(Lock &&rhs)
-      : deleter_(rhs.deleter_) {
-  }
-  ~Lock() {
-    deleter_();
-  }
- private:
-  std::function<void ()> deleter_;
-}; // class Lock
 
 /**
  * State locking and unlocking operations are constant time.
@@ -48,11 +32,11 @@ class RotorMutex {
     most_fresh_ = free_.front();
   }
 
-  Lock acquireReadOnly(size_t *read_index,
-                       size_t *state_version);
-  Lock acquireReadWrite(size_t *read_index, 
-                        size_t *state_version,
-                        size_t *write_index);
+  RotorLock acquireReadOnly(size_t *read_index,
+                            size_t *state_version);
+  RotorLock acquireReadWrite(size_t *read_index, 
+                             size_t *state_version,
+                             size_t *write_index);
  private:
   struct StateInfo {
     size_t state_version_;
@@ -99,8 +83,8 @@ class RotorMutex {
 }; // class RotorMutex<n_states__>
 
 template <size_t n_states__>
-Lock RotorMutex<n_states__>::acquireReadOnly(size_t *read_index,
-                                             size_t *state_version) {
+RotorLock RotorMutex<n_states__>::acquireReadOnly(size_t *read_index,
+                                                  size_t *state_version) {
   std::unique_lock<std::mutex> lock(mutex_);
   StateIterator read_state = mostFreshReadOnly();
   lock.unlock();
@@ -108,16 +92,16 @@ Lock RotorMutex<n_states__>::acquireReadOnly(size_t *read_index,
   *read_index = read_state - states_.begin();
   *state_version = read_state->state_version_;
 
-  return Lock([this, read_state] () {
-                std::lock_guard<std::mutex> lock(mutex_);
-                freeAfterRead(read_state);
-              });
+  return RotorLock([this, read_state] () {
+                     std::lock_guard<std::mutex> lock(mutex_);
+                     freeAfterRead(read_state);
+                   });
 }
 
 template <size_t n_states__>
-Lock RotorMutex<n_states__>::acquireReadWrite(size_t *read_index, 
-                                              size_t *state_version,
-                                              size_t *write_index) {
+RotorLock RotorMutex<n_states__>::acquireReadWrite(size_t *read_index, 
+                                                   size_t *state_version,
+                                                   size_t *write_index) {
   std::unique_lock<std::mutex> lock(mutex_);
   StateIterator read_state = mostFreshReadOnly();
   StateIterator write_state = leastFreshReadWrite();
@@ -127,11 +111,11 @@ Lock RotorMutex<n_states__>::acquireReadWrite(size_t *read_index,
   *state_version = read_state->state_version_;
   *write_index = write_state - states_.begin();
 
-  return Lock([this, read_state, write_state] () {
-                std::lock_guard<std::mutex> lock(mutex_);
-                freeAfterRead(read_state);
-                freeAfterWrite(write_state);
-              });
+  return RotorLock([this, read_state, write_state] () {
+                     std::lock_guard<std::mutex> lock(mutex_);
+                     freeAfterRead(read_state);
+                     freeAfterWrite(write_state);
+                   });
 }
 
 } // namespace component

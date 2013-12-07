@@ -199,8 +199,8 @@ TEST_F(component_RotorMutex,
        test_same_version_when_relock_ro_with_rw_locked_between_ro_lock_unlock) {
   RotorMutex<3> mutex;
   size_t state_version0, state_version1, unused;
-  std::unique_ptr<Lock> lock0(
-      new Lock(mutex.acquireReadOnly(&unused, &state_version0))
+  std::unique_ptr<RotorLock> lock0(
+      new RotorLock(mutex.acquireReadOnly(&unused, &state_version0))
       );
   auto lock1 = mutex.acquireReadWrite(&unused, &unused, &unused);
   lock0.reset();
@@ -212,8 +212,8 @@ TEST_F(component_RotorMutex,
        test_same_version_when_relock_ro_with_rw_unlocked_between_ro_lock_unlo) {
   RotorMutex<3> mutex;
   size_t state_version0, state_version1, unused;
-  std::unique_ptr<Lock> lock0(
-      new Lock(mutex.acquireReadOnly(&unused, &state_version0))
+  std::unique_ptr<RotorLock> lock0(
+      new RotorLock(mutex.acquireReadOnly(&unused, &state_version0))
       );
   {
     auto lock1 = mutex.acquireReadWrite(&unused, &unused, &unused);
