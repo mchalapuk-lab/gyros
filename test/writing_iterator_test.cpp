@@ -14,7 +14,7 @@ using namespace test::gyros::component;
 using namespace test;
 using namespace testing;
 
-typedef WritingIterator<EmptyComponent, FakeLock> TestedIterator;
+typedef WritingIterator<EmptyComponent, FakeSharedLock> TestedIterator;
 
 class component_WritingIterator : public ::testing::TestWithParam<ptrdiff_t> {
 };
@@ -30,9 +30,9 @@ TEST_P(component_WritingIterator, test_write_offset) {
   size_t original_value =
       components[index].member_ = std::numeric_limits<size_t>::max();
 
-  WritingIterator<TestedComponent, FakeLock> it(components + index,
-                                                write_offset,
-                                                FakeLock());
+  WritingIterator<TestedComponent, FakeSharedLock> it(components + index,
+                                                      write_offset,
+                                                      FakeSharedLock());
   it.visit(
       [] (TestedComponent const& source, TestedComponent &target) {
         target.member_ = source.member_ - 1;

@@ -96,7 +96,8 @@ template <class ComponentType, class LockType>
 class ReadingIterator : public PositionIterator<ComponentType> {
  public:
   ReadingIterator(ComponentType const* ptr, LockType lock)
-      : PositionIterator<ComponentType>(ptr), lock_(lock) {
+      : PositionIterator<ComponentType>(ptr),
+      lock_(new LockType(std::move(lock))) {
   }
 
   ComponentType const& operator* () const {
@@ -106,7 +107,7 @@ class ReadingIterator : public PositionIterator<ComponentType> {
     return this->ptr_;
   }
  private:
-  LockType lock_;
+  std::shared_ptr<LockType> lock_;
 }; // class ReadingIterator
 
 template <class ComponentType, class LockType>
