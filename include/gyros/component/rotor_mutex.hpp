@@ -7,7 +7,7 @@
 #include <mutex>
 #include <functional>
 #include <vector>
-#include <queue>
+#include <deque>
 #include <stdexcept>
 
 namespace gyros {
@@ -39,9 +39,10 @@ class RotorMutex {
 
     std::fill(states_.begin(), states_.end(), StateInfo{0, 0});
     for (auto it = states_.begin(),end = states_.end(); it != end; ++it) {
-      free_.push(it);
+      free_.push_back(it);
       it->state_version_ = it - states_.begin();
     }
+    most_fresh_ = free_.front();
   }
 
   Lock acquireReadOnly(size_t *read_index,
@@ -59,34 +60,35 @@ class RotorMutex {
 
   std::mutex mutex_;
   std::vector<StateInfo> states_;
-  std::queue<StateIterator> free_;
+  std::deque<StateIterator> free_;
+  StateIterator most_fresh_;
 
   StateIterator mostFreshReadOnly() {
-    if (free_.size() == 0) {
-      throw std::logic_error("no free states for writing");
+    if (most_fresh_ == free_.front()) {
+      free_.pop_front();
     }
-    auto state = free_.back();
-    state->reader_count_ += 1;
-    return state;
+    most_fresh_->reader_count_ += 1;
+    return most_fresh_;
   }
   StateIterator leastFreshReadWrite() {
     if (free_.size() == 0) {
-      throw std::logic_error("no free states for writing");
+      throw std::logic_error("no free states");
     }
-    auto state = free_.front();
-    if (state->reader_count_ != 0) {
-      throw std::logic_error("no free states for writing");
-    }
-    free_.pop();
+    auto state = free_.back();
+    free_.pop_back();
     return state;
   }
 
   void freeAfterRead(StateIterator state) {
-    state->reader_count_ -= 1;
+    if (--state->reader_count_ == 0) {
+      auto it = free_.begin();
+      for ( ; state->state_version_ > (*it)->state_version_; ++it);
+      free_.insert(it, state);
+    }
   }
   void freeAfterWrite(StateIterator state) {
-    state->state_version_ = free_.back()->state_version_ + 1;
-    free_.push(state);
+    state->state_version_ = most_fresh_->state_version_ + 1;
+    free_.push_front(most_fresh_ = state);
   }
 }; // class RotorMutex<n_states__>
 
