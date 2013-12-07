@@ -18,6 +18,7 @@ class RotorLock {
   RotorLock(RotorLock const&) = delete;
   RotorLock(RotorLock &&rhs)
       : deleter_(rhs.deleter_) {
+    rhs.deleter_ = [] () {};
   }
   ~RotorLock() {
     deleter_();

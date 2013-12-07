@@ -38,18 +38,19 @@ TEST_F(component_ReadingIterator, test_method_invocation) {
 TEST_F(component_ReadingIterator, test_last_lock_destoyed_with_last_iterator) {
   EmptyComponent component;
   MockFunctor functor;
+  EXPECT_CALL(functor, call())
+      .Times(0);
   {
     auto it0 = TestedIterator(&component, FakeLock(wrap(functor)));
     {
       auto it1 = it0;
       {
         auto it2 = it1;
-        Mock::VerifyAndClearExpectations(&functor);
       }
-      Mock::VerifyAndClearExpectations(&functor);
     }
     Mock::VerifyAndClearExpectations(&functor);
-    EXPECT_CALL(functor, call());
+    EXPECT_CALL(functor, call())
+        .Times(1);
   }
 }
 
