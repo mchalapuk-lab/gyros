@@ -39,6 +39,10 @@ class Rotor<T, L...> : private Rotor<L...> {
     delete [] reinterpret_cast<detail::RawMemory<T> *>(pool_);
   }
 
+  size_t capacity() const {
+    return capacity_;
+  }
+
   PositionIterator<T> begin() const noexcept {
     return begin<T>();
   }
@@ -58,14 +62,20 @@ class Rotor<T, L...> : private Rotor<L...> {
   ReadOnlyIterator const upgradeReadOnly(PositionIterator<T> it) {
     size_t read_offset, state_version;
     RotorLock lock = mutex_.acquireReadOnly(&read_offset, &state_version);
-    auto ptr = pool_ + (it - begin()) + (capacity_ * read_offset);
-    return ReadOnlyIterator(ptr, std::move(lock));
+    return ReadOnlyIterator(pool_ + (it - begin()),
+                            capacity_ * read_offset,
+                            std::move(lock));
   }
   ReadWriteIterator upgradeReadWrite(PositionIterator<T> it) {
-    size_t r_offset, state_version, w_offset;
-    auto lock = mutex_.acquireReadWrite(&r_offset, &state_version, &w_offset);
-    auto ptr = pool_ + (it - begin()) + (capacity_ * r_offset);
-    return ReadWriteIterator(ptr, w_offset, std::move(lock));
+    size_t read_offset, state_version, write_offset;
+
+    auto lock = mutex_.acquireReadWrite(&read_offset,
+                                        &state_version,
+                                        &write_offset);
+    return ReadWriteIterator(pool_ + (it - begin()),
+                             capacity_ * read_offset,
+                             capacity_ * write_offset,
+                             std::move(lock));
   }
 
  protected:

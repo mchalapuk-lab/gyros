@@ -21,6 +21,29 @@ typedef WritingIterator<EmptyComponent, RotorLock> LockTestingIterator;
 class component_WritingIterator : public ::testing::TestWithParam<ptrdiff_t> {
 };
 
+TEST_P(component_WritingIterator, test_read_offset) {
+  typedef OneMemberComponent<size_t> TestedComponent;
+
+  ptrdiff_t read_offset = GetParam();
+  size_t length = abs(read_offset) + 1;
+  TestedComponent components[length];
+
+  size_t index = (length - read_offset) % length;
+  size_t original_value = components[index + read_offset].member_
+      = std::numeric_limits<size_t>::max();
+
+  WritingIterator<TestedComponent, FakeLock> it(components + index,
+                                                read_offset,
+                                                0,
+                                                FakeLock());
+  it.visit(
+      [] (TestedComponent const& source, TestedComponent &target) {
+        target.member_ = source.member_ - 1;
+      });
+
+  ASSERT_EQ(original_value - 1, components[index].member_);
+}
+
 TEST_P(component_WritingIterator, test_write_offset) {
   typedef OneMemberComponent<size_t> TestedComponent;
 
@@ -33,6 +56,7 @@ TEST_P(component_WritingIterator, test_write_offset) {
       components[index].member_ = std::numeric_limits<size_t>::max();
 
   WritingIterator<TestedComponent, FakeLock> it(components + index,
+                                                0,
                                                 write_offset,
                                                 FakeLock());
   it.visit(
@@ -55,7 +79,7 @@ TEST_F(component_WritingIterator, test_lock_destoyed_with_last_iterator) {
   EXPECT_CALL(functor, call())
       .Times(0);
 
-  auto it0 = LockTestingIterator(&component, 0, RotorLock(wrap(functor)));
+  auto it0 = LockTestingIterator(&component, 0, 0, RotorLock(wrap(functor)));
   {
     auto it1 = it0;
     auto it2 = it1;
