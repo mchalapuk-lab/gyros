@@ -2,6 +2,7 @@
 // license: MIT
 // vim: ts=2 sw=2 expandtab
 #include "gyros/component/iterator.hpp"
+#include "gyros/component/rotor_lock.hpp"
 
 #include <gtest/gtest.h>
 
@@ -14,7 +15,8 @@ using namespace test::gyros::component;
 using namespace test;
 using namespace testing;
 
-typedef WritingIterator<EmptyComponent, FakeSharedLock> TestedIterator;
+typedef WritingIterator<EmptyComponent, FakeLock> TestedIterator;
+typedef WritingIterator<EmptyComponent, RotorLock> LockTestingIterator;
 
 class component_WritingIterator : public ::testing::TestWithParam<ptrdiff_t> {
 };
@@ -30,9 +32,9 @@ TEST_P(component_WritingIterator, test_write_offset) {
   size_t original_value =
       components[index].member_ = std::numeric_limits<size_t>::max();
 
-  WritingIterator<TestedComponent, FakeSharedLock> it(components + index,
-                                                      write_offset,
-                                                      FakeSharedLock());
+  WritingIterator<TestedComponent, FakeLock> it(components + index,
+                                                write_offset,
+                                                FakeLock());
   it.visit(
       [] (TestedComponent const& source, TestedComponent &target) {
         target.member_ = source.member_ - 1;
@@ -46,4 +48,21 @@ INSTANTIATE_TEST_CASE_P(
     component_WritingIterator,
     ValuesIn((ptrdiff_t[]) { -1, 0, 1, 8, 2048 })
     );
+
+TEST_F(component_WritingIterator, test_lock_destoyed_with_last_iterator) {
+  EmptyComponent component;
+  MockFunctor functor;
+  EXPECT_CALL(functor, call())
+      .Times(0);
+
+  auto it0 = LockTestingIterator(&component, 0, RotorLock(wrap(functor)));
+  {
+    auto it1 = it0;
+    auto it2 = it1;
+    auto it3 = it0;
+  }
+  Mock::VerifyAndClearExpectations(&functor);
+  EXPECT_CALL(functor, call())
+      .Times(1);
+}
 

@@ -15,16 +15,16 @@ using namespace test::gyros::component;
 using namespace test;
 using namespace testing;
 
-typedef ReadingIterator<EmptyComponent, FakeSharedLock> TestedIterator;
-typedef ReadingIterator<MockComponent, FakeSharedLock> CallTestingIterator;
-typedef ReadingIterator<EmptyComponent, FakeLock> LockTestingIterator;
+typedef ReadingIterator<EmptyComponent, FakeLock> TestedIterator;
+typedef ReadingIterator<MockComponent, FakeLock> CallTestingIterator;
+typedef ReadingIterator<EmptyComponent, RotorLock> LockTestingIterator;
 
 class component_ReadingIterator : public ::testing::TestWithParam<ptrdiff_t> {
 };
 
 TEST_F(component_ReadingIterator, test_dereference) {
   EmptyComponent component;
-  auto it = TestedIterator(&component, FakeSharedLock());
+  auto it = TestedIterator(&component, FakeLock());
   auto const& dereferenced = *it;
 
   ASSERT_EQ(&(component), &(dereferenced));
@@ -32,7 +32,7 @@ TEST_F(component_ReadingIterator, test_dereference) {
 
 TEST_F(component_ReadingIterator, test_method_invocation) {
   MockComponent component;
-  auto it = CallTestingIterator(&component, FakeSharedLock());
+  auto it = CallTestingIterator(&component, FakeLock());
 
   EXPECT_CALL(component, method());
   it->method();
@@ -44,7 +44,7 @@ TEST_F(component_ReadingIterator, test_lock_destoyed_with_last_iterator) {
   EXPECT_CALL(functor, call())
       .Times(0);
 
-  auto it0 = LockTestingIterator(&component, FakeLock(wrap(functor)));
+  auto it0 = LockTestingIterator(&component, RotorLock(wrap(functor)));
   {
     auto it1 = it0;
     auto it2 = it1;

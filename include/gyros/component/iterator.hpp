@@ -119,7 +119,7 @@ class WritingIterator : public PositionIterator<ComponentType> {
                   ptrdiff_t write_offset,
                   LockType lock)
       : PositionIterator<ComponentType>(ptr),
-      data_(new Data{write_offset, lock}) {
+      data_(new Data{write_offset, std::move(lock)}) {
   }
 
   template <class WritingVisitorType>
