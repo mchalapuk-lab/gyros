@@ -192,22 +192,77 @@ TEST_F(component_Rotor, test_begin_upgraded_ro_plus_capacity_equals_pos_end) {
 
 
 TEST_F(component_Rotor, test_write_point_different_that_read) {
-  int value = 8;
+  auto rotor = RotorBuilder<EmptyComponent>()
+      .emplace<EmptyComponent>()
+      .build();
 
-  RotorBuilder<EmptyComponent> builder;
-  builder.emplace<EmptyComponent>();
-  auto rotor = builder.build();
-
-  auto it = rotor.upgradeReadWrite(rotor.begin());
+  MockVisitor visitor;
   auto AssertWritePointNotEqualReadPoint = [] (EmptyComponent const& from,
                                                EmptyComponent &to) {
     ASSERT_NE(&from, &to);
   };
-
-  MockVisitor visitor;
   EXPECT_CALL(visitor, call(Matcher<EmptyComponent const&>(_),
                             Matcher<EmptyComponent&>(_)))
       .WillOnce(Invoke(AssertWritePointNotEqualReadPoint));
+
+  auto it = rotor.upgradeReadWrite(rotor.begin());
+  it.visit(wrap(visitor));
+}
+
+TEST_F(component_Rotor,
+       test_source_component_contain_initial_value_when_visiting_after_build) {
+  int number = 5;
+  auto rotor = RotorBuilder<OneMemberComponent<int>>()
+      .emplace<OneMemberComponent<int>>(number)
+      .build();
+
+  MockVisitor visitor;
+  struct AssertMemberEquals {
+    int expected;
+
+    void operator() (OneMemberComponent<int> const& from,
+                     OneMemberComponent<int> &) {
+      ASSERT_EQ(expected, from.member_);
+    }
+  };
+  EXPECT_CALL(visitor, call(Matcher<OneMemberComponent<int> const&>(_),
+                            Matcher<OneMemberComponent<int> &>(_)))
+      .WillOnce(Invoke(AssertMemberEquals{number}));
+
+  auto it = rotor.upgradeReadWrite(rotor.begin());
+  it.visit(wrap(visitor));
+}
+
+TEST_F(component_Rotor,
+       test_component_contain_value_set_during_previous_upgrade) {
+  int initial = 0;
+  int number = 5;
+  auto rotor = RotorBuilder<OneMemberComponent<int>>()
+      .emplace<OneMemberComponent<int>>(initial)
+      .build();
+
+  {
+    auto it = rotor.upgradeReadWrite(rotor.begin());
+    it.visit([number] (OneMemberComponent<int> const&,
+                       OneMemberComponent<int> &target) {
+               target.member_ = number;
+             });
+  }
+
+  MockVisitor visitor;
+  struct AssertMemberEquals {
+    int expected;
+
+    void operator() (OneMemberComponent<int> const& from,
+                     OneMemberComponent<int> &) {
+      ASSERT_EQ(expected, from.member_);
+    }
+  };
+  EXPECT_CALL(visitor, call(Matcher<OneMemberComponent<int> const&>(_),
+                            Matcher<OneMemberComponent<int> &>(_)))
+      .WillOnce(Invoke(AssertMemberEquals{number}));
+
+  auto it = rotor.upgradeReadWrite(rotor.begin());
   it.visit(wrap(visitor));
 }
 

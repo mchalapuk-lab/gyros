@@ -16,6 +16,8 @@ struct MockVisitor {
   MOCK_METHOD2(call, void(EmptyComponent const&, EmptyComponent&));
   MOCK_METHOD2(call, void(CountingComponent const&, CountingComponent&));
   MOCK_METHOD2(call, void(MockComponent const&, MockComponent&));
+  MOCK_METHOD2(call, void(OneMemberComponent<int> const&,
+                          OneMemberComponent<int> &));
 
   template <class ComponentType>
   void operator() (ComponentType const& source, ComponentType &target) {
