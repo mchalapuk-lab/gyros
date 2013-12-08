@@ -8,6 +8,7 @@
 
 #include "gyros/component/rotor_builder.hpp"
 #include "gyros/component/rotor_mutex.hpp"
+#include "gyros/component/rotor_lock.hpp"
 #include "gyros/component/iterator.hpp"
 
 namespace gyros {
@@ -20,9 +21,8 @@ struct Rotor {
 template <class T, class ...L>
 class Rotor<T, L...> : private Rotor<L...> {
  public:
-  typedef std::shared_ptr<std::nullptr_t> Unlocker;
-  typedef ReadingIterator<T, Unlocker> ReadOnlyIterator;
-  typedef WritingIterator<T, Unlocker> ReadWriteIterator;
+  typedef ReadingIterator<T, RotorLock> ReadOnlyIterator;
+  typedef WritingIterator<T, RotorLock> ReadWriteIterator;
 
   Rotor(Rotor<T, L...> &&rhs) noexcept
     : Rotor<L...>(std::move(rhs)),
@@ -55,13 +55,17 @@ class Rotor<T, L...> : private Rotor<L...> {
     return end(static_cast<ComponentType *>(nullptr));
   }
 
-  ReadOnlyIterator const upgradeReadOnly(PositionIterator<T> it) const {
-    ptrdiff_t index = it - begin();
-    return ReadOnlyIterator(pool_ + index, unlocker([] () {}));
+  ReadOnlyIterator const upgradeReadOnly(PositionIterator<T> it) {
+    size_t read_offset, state_version;
+    RotorLock lock = mutex_.acquireReadOnly(&read_offset, &state_version);
+    auto ptr = pool_ + (it - begin()) + (capacity_ * read_offset);
+    return ReadOnlyIterator(ptr, std::move(lock));
   }
-  ReadWriteIterator upgradeReadWrite(PositionIterator<T> it) const {
-    ptrdiff_t index = it - begin();
-    return ReadWriteIterator(pool_ + index, 0, unlocker([] () {}));
+  ReadWriteIterator upgradeReadWrite(PositionIterator<T> it) {
+    size_t r_offset, state_version, w_offset;
+    auto lock = mutex_.acquireReadWrite(&r_offset, &state_version, &w_offset);
+    auto ptr = pool_ + (it - begin()) + (capacity_ * r_offset);
+    return ReadWriteIterator(ptr, w_offset, std::move(lock));
   }
 
  protected:
@@ -80,15 +84,10 @@ class Rotor<T, L...> : private Rotor<L...> {
   PositionIterator<T> const end(T*) const {
     return PositionIterator<T>(pool_) + capacity_;
   }
-
-  template <class Functor>
-  Unlocker unlocker(Functor func) const {
-    return Unlocker(nullptr, [func] (std::nullptr_t) { func(); });
-  }
  private:
   T *const pool_;
   size_t const capacity_;
-  RotorMutex<> mutex_;
+  RotorMutex<detail::N_COPIES> mutex_;
 
   friend class detail::RotorCreator<Rotor<T, L...>>;
 }; // class Rotor<T, L...>

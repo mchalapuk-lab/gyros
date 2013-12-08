@@ -76,14 +76,15 @@ TEST_F(component_Rotor, test_write_point_different_that_read) {
   auto rotor = builder.build();
 
   auto it = rotor.upgradeReadWrite(rotor.begin());
-  auto assertion = [] (EmptyComponent const& from, EmptyComponent &to) {
+  auto AssertWritePointNotEqualReadPoint = [] (EmptyComponent const& from,
+                                               EmptyComponent &to) {
     ASSERT_NE(&from, &to);
   };
 
   MockVisitor visitor;
   EXPECT_CALL(visitor, call(Matcher<EmptyComponent const&>(_),
                             Matcher<EmptyComponent&>(_)))
-      .WillOnce(Invoke(assertion));
+      .WillOnce(Invoke(AssertWritePointNotEqualReadPoint));
   it.visit(wrap(visitor));
 }
 
