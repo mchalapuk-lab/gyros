@@ -31,6 +31,10 @@ class RotorMutex {
     }
     most_fresh_ = free_.front();
   }
+  RotorMutex(RotorMutex &&rhs) noexcept
+      : states_(std::move(rhs.states_)) {
+  }
+  RotorMutex(RotorMutex const&) = delete;
 
   RotorLock acquireReadOnly(size_t *read_index,
                             size_t *state_version);

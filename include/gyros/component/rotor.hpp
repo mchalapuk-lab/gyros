@@ -16,20 +16,101 @@ namespace component {
 
 template <class ...ComponentTypes>
 struct Rotor {
-}; // struct Rotor
+}; // struct Rotor<ComponentTypes...>
+
+template <class ...ComponentTypes>
+struct RotorBase {
+}; // struct RotorBase<ComponentTypes...>
 
 template <class T, class ...L>
-class Rotor<T, L...> : private Rotor<L...> {
+struct Rotor<T, L...> : private RotorBase<T, L...> {
  public:
-  typedef ReadingIterator<T, RotorLock> ReadOnlyIterator;
-  typedef WritingIterator<T, RotorLock> ReadWriteIterator;
+  template <class ComponentType>
+  using ReadOnlyIterator = ReadingIterator<ComponentType, RotorLock>;
+  template <class ComponentType>
+  using ReadWriteIterator = WritingIterator<ComponentType, RotorLock>;
 
   Rotor(Rotor<T, L...> &&rhs) noexcept
-    : Rotor<L...>(std::move(rhs)),
-    pool_(rhs.pool_),
-    capacity_(rhs.capacity_) {
+      : RotorBase<T, L...>(std::move(rhs)),
+      mutex_(std::move(rhs.mutex_)) {
   }
-  ~Rotor() {
+  
+  size_t capacity() const noexcept {
+    return capacity<T>();
+  }
+  PositionIterator<T> begin() const noexcept {
+    return begin<T>();
+  }
+  PositionIterator<T> const end() const noexcept {
+    return end<T>();
+  }
+
+  template <class ComponentType>
+  size_t capacity() const noexcept {
+    return this->capacityHack(static_cast<ComponentType *>(nullptr));
+  }
+  template <class ComponentType>
+  PositionIterator<ComponentType> const begin() const noexcept {
+    return PositionIterator<ComponentType>(pool<ComponentType>());
+  }
+  template <class ComponentType>
+  PositionIterator<ComponentType> const end() const noexcept {
+    return begin<ComponentType>() + capacity<ComponentType>();
+  }
+
+  template <class ComponentType>
+  ReadOnlyIterator<ComponentType> const
+  upgradeReadOnly(PositionIterator<ComponentType> it) {
+    size_t read_offset, state_version;
+    RotorLock lock = mutex_.acquireReadOnly(&read_offset, &state_version);
+
+    return ReadOnlyIterator<ComponentType>(
+        pool<ComponentType>() + (it - begin()),
+        capacity<ComponentType>() * read_offset,
+        std::move(lock)
+        );
+  }
+  template <class ComponentType>
+  ReadWriteIterator<ComponentType>
+  upgradeReadWrite(PositionIterator<ComponentType> it) {
+    size_t read_offset, state_version, write_offset;
+    auto lock = mutex_.acquireReadWrite(&read_offset,
+                                        &state_version,
+                                        &write_offset);
+    return ReadWriteIterator<ComponentType>(
+        pool<ComponentType>() + (it - begin()),
+        capacity<ComponentType>() * read_offset,
+        capacity<ComponentType>() * write_offset,
+        std::move(lock)
+        );
+  }
+
+ private:
+  RotorMutex<detail::N_COPIES> mutex_;
+
+  template <class ...ArgTypes>
+  Rotor(ArgTypes ...pool_info) noexcept
+    : RotorBase<T, L...>(std::forward<ArgTypes>(pool_info)...) {
+  }
+  template <class ComponentType>
+  ComponentType *const pool() const noexcept {
+    return this->poolHack(static_cast<ComponentType *>(nullptr));
+  }
+
+  friend class detail::RotorCreator<Rotor<T, L...>>;
+}; // struct Rotor<T, L...>
+
+template <class T, class ...L>
+class RotorBase<T, L...> : public RotorBase<L...> {
+ public:
+  RotorBase(RotorBase<T, L...> &&rhs) noexcept
+      : RotorBase<L...>(std::move(rhs)),
+      pool_(rhs.pool_),
+      capacity_(rhs.capacity_) {
+
+    rhs.capacity_ = 0;
+  }
+  ~RotorBase() {
     if (!capacity_) {
       return; // in case if moved
     }
@@ -39,68 +120,27 @@ class Rotor<T, L...> : private Rotor<L...> {
     delete [] reinterpret_cast<detail::RawMemory<T> *>(pool_);
   }
 
-  size_t capacity() const {
-    return capacity_;
-  }
-
-  PositionIterator<T> begin() const noexcept {
-    return begin<T>();
-  }
-  PositionIterator<T> const end() const noexcept {
-    return end<T>();
-  }
-
-  template <class ComponentType>
-  PositionIterator<ComponentType> begin() const noexcept {
-    return begin(static_cast<ComponentType *>(nullptr));
-  }
-  template <class ComponentType>
-  PositionIterator<ComponentType> const end() const noexcept {
-    return end(static_cast<ComponentType *>(nullptr));
-  }
-
-  ReadOnlyIterator const upgradeReadOnly(PositionIterator<T> it) {
-    size_t read_offset, state_version;
-    RotorLock lock = mutex_.acquireReadOnly(&read_offset, &state_version);
-    return ReadOnlyIterator(pool_ + (it - begin()),
-                            capacity_ * read_offset,
-                            std::move(lock));
-  }
-  ReadWriteIterator upgradeReadWrite(PositionIterator<T> it) {
-    size_t read_offset, state_version, write_offset;
-
-    auto lock = mutex_.acquireReadWrite(&read_offset,
-                                        &state_version,
-                                        &write_offset);
-    return ReadWriteIterator(pool_ + (it - begin()),
-                             capacity_ * read_offset,
-                             capacity_ * write_offset,
-                             std::move(lock));
-  }
-
  protected:
   template <class ...ArgTypes>
-  Rotor(detail::RawMemory<T> *pool_start,
-        size_t pool_capacity,
-        ArgTypes &&...next_pool_info)
-    : Rotor<L...>(next_pool_info...),
+  RotorBase(detail::RawMemory<T> *pool_start,
+            size_t pool_capacity,
+            ArgTypes ...next_pool_info) noexcept
+    : RotorBase<L...>(std::forward<ArgTypes>(next_pool_info)...),
     pool_(reinterpret_cast<T*>(pool_start)),
     capacity_(pool_capacity) {
   }
 
-  PositionIterator<T> begin(T*) const {
-    return PositionIterator<T>(pool_);
+  size_t capacityHack(T *) const noexcept {
+    return capacity_;
   }
-  PositionIterator<T> const end(T*) const {
-    return PositionIterator<T>(pool_) + capacity_;
+  T *const poolHack(T *) const noexcept {
+    return pool_;
   }
+
  private:
   T *const pool_;
-  size_t const capacity_;
-  RotorMutex<detail::N_COPIES> mutex_;
-
-  friend class detail::RotorCreator<Rotor<T, L...>>;
-}; // class Rotor<T, L...>
+  size_t capacity_;
+}; // class RotorBase<T, L...>
 
 } // namespace component
 } // namespace gyros
