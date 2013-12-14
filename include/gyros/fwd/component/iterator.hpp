@@ -10,10 +10,10 @@ namespace component {
 template <class ComponentType>
 struct PositionIterator;
 
-template <class ComponentType, class LockType>
+template <class ComponentType>
 struct ReadingIterator;
 
-template <class ComponentType, class LockType>
+template <class ComponentType>
 struct WritingIterator;
 
 } // namespace component

@@ -8,6 +8,7 @@ add_executable (${PROJECT_NAME}-tests
   writing_iterator_test.cpp
   rotor_lock_test.cpp
   rotor_mutex_test.cpp
+  rotor_state_test.cpp
   rotor_test.cpp
 )
 target_link_libraries (${PROJECT_NAME}-tests gmock pthread)

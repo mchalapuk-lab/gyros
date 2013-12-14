@@ -92,42 +92,32 @@ class PositionIterator : public IteratorFacade<PositionIterator<ComponentType>> 
   ComponentType const* ptr_;
 }; // class PositionIterator
 
-template <class ComponentType, class LockType>
+template <class ComponentType>
 class ReadingIterator : public PositionIterator<ComponentType> {
  public:
-  ReadingIterator(ComponentType const* ptr,
-                  ptrdiff_t read_offset,
-                  LockType lock)
+  ReadingIterator(ComponentType const* ptr, ptrdiff_t read_offset)
       : PositionIterator<ComponentType>(ptr),
-      data_(new Data{read_offset, std::move(lock)}) {
+      read_offset_(read_offset) {
   }
 
   ComponentType const& operator* () const {
     return *operator->();
   }
   ComponentType const* operator->() const {
-    return this->ptr_ + data_->read_offset_;
+    return this->ptr_ + read_offset_;
   }
  private:
-  struct Data {
-    ptrdiff_t read_offset_;
-    LockType lock_;
-  };
-
-  std::shared_ptr<Data const> data_;
+  ptrdiff_t read_offset_;
 }; // class ReadingIterator
 
-template <class ComponentType, class LockType>
+template <class ComponentType>
 class WritingIterator : public PositionIterator<ComponentType> {
  public:
-  typedef WritingIterator<ComponentType, LockType> IteratorType;
-
   WritingIterator(ComponentType *ptr,
                   ptrdiff_t read_offset,
-                  ptrdiff_t write_offset,
-                  LockType lock)
+                  ptrdiff_t write_offset)
       : PositionIterator<ComponentType>(ptr),
-      data_(new Data{read_offset, write_offset, std::move(lock)}) {
+      data_(new Data{read_offset, write_offset}) {
   }
 
   template <class WritingVisitorType>
@@ -142,7 +132,6 @@ class WritingIterator : public PositionIterator<ComponentType> {
   struct Data {
     ptrdiff_t read_offset_;
     ptrdiff_t write_offset_;
-    LockType lock_;
   };
 
   std::shared_ptr<Data const> data_;

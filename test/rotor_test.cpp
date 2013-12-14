@@ -71,7 +71,8 @@ TEST_F(component_Rotor, test_dereferencing_after_upgrade_readonly) {
       .emplace<TestedComponent>(value)
       .build();
 
-  auto it = rotor.upgradeReadOnly(rotor.begin());
+  auto state = rotor.acquireReadOnly();
+  auto it = state.upgrade(rotor.begin());
   auto const& dereferenced = *it;
   ASSERT_EQ(value, dereferenced.member_);
 }
@@ -82,7 +83,8 @@ TEST_F(component_Rotor, test_iterator_equals_position_after_upgrade_readonly) {
       .build();
 
   auto begin = rotor.begin();
-  auto it = rotor.upgradeReadOnly(begin);
+  auto state = rotor.acquireReadOnly();
+  auto it = state.upgrade(begin);
   ASSERT_EQ(begin, it);
 }
 
@@ -92,7 +94,8 @@ TEST_F(component_Rotor, test_iterator_equals_position_after_upgrade_readwrite) {
       .build();
 
   auto begin = rotor.begin();
-  auto it = rotor.upgradeReadWrite(begin);
+  auto state = rotor.acquireReadOnly();
+  auto it = state.upgrade(begin);
   ASSERT_EQ(begin, it);
 }
 
@@ -102,8 +105,10 @@ TEST_F(component_Rotor, test_2_iterators_both_upgraded_readonly_are_equal) {
       .build();
 
   auto begin = rotor.begin();
-  auto it0 = rotor.upgradeReadOnly(begin);
-  auto it1 = rotor.upgradeReadOnly(begin);
+  auto state0 = rotor.acquireReadOnly();
+  auto it0 = state0.upgrade(begin);
+  auto state1 = rotor.acquireReadOnly();
+  auto it1 = state1.upgrade(begin);
   ASSERT_EQ(it0, it1);
 }
 
@@ -113,8 +118,10 @@ TEST_F(component_Rotor, test_2_iterators_both_upgraded_readwrite_are_equal) {
       .build();
 
   auto begin = rotor.begin();
-  auto it0 = rotor.upgradeReadWrite(begin);
-  auto it1 = rotor.upgradeReadWrite(begin);
+  auto state0 = rotor.acquireReadWrite();
+  auto it0 = state0.upgrade(begin);
+  auto state1 = rotor.acquireReadWrite();
+  auto it1 = state1.upgrade(begin);
   ASSERT_EQ(it0, it1);
 }
 
@@ -124,8 +131,10 @@ TEST_F(component_Rotor, test_upgraded_readonly_equal_upgraded_readwrite) {
       .build();
 
   auto begin = rotor.begin();
-  auto ro = rotor.upgradeReadOnly(begin);
-  auto rw = rotor.upgradeReadWrite(begin);
+  auto state0 = rotor.acquireReadOnly();
+  auto ro = state0.upgrade(begin);
+  auto state1 = rotor.acquireReadWrite();
+  auto rw = state1.upgrade(begin);
   ASSERT_EQ(ro, rw);
 }
 
@@ -136,9 +145,10 @@ TEST_F(component_Rotor, test_upgraded_ro_equal_pos_after_locking_unlocking_rw) {
 
   auto begin = rotor.begin();
   {
-    auto it = rotor.upgradeReadWrite(begin);
+    auto state0 = rotor.acquireReadWrite();
   }
-  auto ro = rotor.upgradeReadOnly(begin);
+  auto state1 = rotor.acquireReadOnly();
+  auto ro = state1.upgrade(begin);
   ASSERT_EQ(begin, ro);
 }
 
@@ -149,9 +159,10 @@ TEST_F(component_Rotor, test_upgraded_rw_equal_pos_after_locking_unlocking_rw) {
 
   auto begin = rotor.begin();
   {
-    auto it = rotor.upgradeReadWrite(begin);
+    auto state0 = rotor.acquireReadWrite();
   }
-  auto rw = rotor.upgradeReadWrite(begin);
+  auto state1 = rotor.acquireReadWrite();
+  auto rw = state1.upgrade(begin);
   ASSERT_EQ(begin, rw);
 }
 
@@ -163,7 +174,8 @@ TEST_F(component_Rotor, test_pos_it_begin_plus_one_equal_upgraded_ro_plus_one) {
 
   auto begin = rotor.begin();
   auto pos = begin + 1;
-  auto ro = rotor.upgradeReadOnly(begin) + 1;
+  auto state0 = rotor.acquireReadOnly();
+  auto ro = state0.upgrade(begin) + 1;
   ASSERT_EQ(pos, ro);
 }
 
@@ -175,8 +187,9 @@ TEST_F(component_Rotor, test_pos_it_begin_plus_one_equal_upgraded_rw_plus_one) {
 
   auto begin = rotor.begin();
   auto pos = begin + 1;
-  auto ro = rotor.upgradeReadOnly(begin) + 1;
-  ASSERT_EQ(pos, ro);
+  auto state0 = rotor.acquireReadWrite();
+  auto rw = state0.upgrade(begin) + 1;
+  ASSERT_EQ(pos, rw);
 }
 
 TEST_F(component_Rotor, test_begin_upgraded_ro_plus_capacity_equals_pos_end) {
@@ -186,7 +199,8 @@ TEST_F(component_Rotor, test_begin_upgraded_ro_plus_capacity_equals_pos_end) {
       .emplace<EmptyComponent>()
       .build();
 
-  auto ro = rotor.upgradeReadOnly(rotor.begin()) + rotor.capacity();
+  auto state0 = rotor.acquireReadOnly();
+  auto ro = state0.upgrade(rotor.begin()) + rotor.capacity();
   ASSERT_EQ(rotor.end(), ro);
 }
 
@@ -205,7 +219,8 @@ TEST_F(component_Rotor, test_write_point_different_that_read) {
                             Matcher<EmptyComponent&>(_)))
       .WillOnce(Invoke(AssertWritePointNotEqualReadPoint));
 
-  auto it = rotor.upgradeReadWrite(rotor.begin());
+  auto state0 = rotor.acquireReadWrite();
+  auto it = state0.upgrade(rotor.begin());
   it.visit(wrap(visitor));
 }
 
@@ -229,7 +244,8 @@ TEST_F(component_Rotor,
                             Matcher<OneMemberComponent<int> &>(_)))
       .WillOnce(Invoke(AssertMemberEquals{number}));
 
-  auto it = rotor.upgradeReadWrite(rotor.begin());
+  auto state0 = rotor.acquireReadWrite();
+  auto it = state0.upgrade(rotor.begin());
   it.visit(wrap(visitor));
 }
 
@@ -242,7 +258,8 @@ TEST_F(component_Rotor,
       .build();
 
   {
-    auto it = rotor.upgradeReadWrite(rotor.begin());
+    auto state0 = rotor.acquireReadWrite();
+    auto it = state0.upgrade(rotor.begin());
     it.visit([number] (OneMemberComponent<int> const&,
                        OneMemberComponent<int> &target) {
                target.member_ = number;
@@ -262,7 +279,8 @@ TEST_F(component_Rotor,
                             Matcher<OneMemberComponent<int> &>(_)))
       .WillOnce(Invoke(AssertMemberEquals{number}));
 
-  auto it = rotor.upgradeReadWrite(rotor.begin());
+  auto state1 = rotor.acquireReadWrite();
+  auto it = state1.upgrade(rotor.begin());
   it.visit(wrap(visitor));
 }
 
