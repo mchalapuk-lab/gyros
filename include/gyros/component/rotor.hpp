@@ -98,25 +98,25 @@ struct Rotor<T, L...> : private RotorBase<T, L...> {
     template <class ComponentType>
     ComponentType *const
     operator() (util::TypeLiteral<ComponentType> type) const noexcept {
-      return rotor.poolHack(type);
+      return rotor_.poolHack(type);
     }
-    RotorType const& rotor;
+    RotorType const& rotor_;
   } get_pool_; // struct PoolGetter
 
   struct CapacityGetter {
     template <class ComponentType>
     size_t operator() (util::TypeLiteral<ComponentType> type) const noexcept {
-      return rotor.capacityHack(type);
+      return rotor_.capacityHack(type);
     }
-    RotorType const& rotor;
+    RotorType const& rotor_;
   } get_capacity_; // struct CapacityGetter
 
   struct PositionResolver {
     template <class ComponentType>
     ptrdiff_t operator() (PositionIterator<ComponentType> it) const noexcept {
-      return it - rotor.begin<ComponentType>();
+      return it - rotor_.begin<ComponentType>();
     }
-    RotorType const& rotor;
+    RotorType const& rotor_;
   } get_position_; // struct PositionResolver
 
   RotorMutex<detail::N_COPIES> mutex_;
