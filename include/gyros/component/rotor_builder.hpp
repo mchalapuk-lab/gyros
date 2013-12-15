@@ -7,8 +7,8 @@
 #include <vector>
 #include <functional>
 
-#include "gyros/component/detail/findsubtype.hpp"
-#include "gyros/component/detail/rotor_builder.hpp"
+#include "gyros/component/detail/find_subtype.hpp"
+#include "gyros/component/detail/rotor_creator.hpp"
 #include "gyros/fwd/component/rotor.hpp"
 #include "gyros/fwd/component/rotor_builder.hpp"
 

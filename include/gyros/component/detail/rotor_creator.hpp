@@ -1,8 +1,8 @@
 // author: Maciej Chałapuk
 // license: Apache2
 // vim: ts=2 sw=2 expandtab
-#ifndef GYROS_COMPONENT_DETAIL_ROTOR_BUILDER_HPP_
-#define GYROS_COMPONENT_DETAIL_ROTOR_BUILDER_HPP_
+#ifndef GYROS_COMPONENT_DETAIL_ROTOR_CREATOR_HPP_
+#define GYROS_COMPONENT_DETAIL_ROTOR_CREATOR_HPP_
 
 #include <type_traits>
 
