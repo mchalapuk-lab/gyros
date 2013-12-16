@@ -9,6 +9,7 @@
 #include "gyros/util/type_list/get.hpp"
 #include "gyros/util/type_list/push_back.hpp"
 #include "gyros/util/type_list/cat.hpp"
+#include "gyros/util/type_list/permute.hpp"
 #include "gyros/util/type_list/power_set.hpp"
 
 #endif // include guard

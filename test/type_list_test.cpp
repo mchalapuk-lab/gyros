@@ -93,6 +93,13 @@ static void testConcatenatingThreeSingletonLists() {
                 "test concatenating three singleton lists");
 }
 
+// permute
+
+static_assert(Size<typename Permute<TypeList<>>::Type>::value == 0,
+              "test permutations of emptylist is empty list");
+static_assert(Size<typename Permute<TypeList<Simple>>::Type>::value == 1,
+              "test permutations of singleton is list is list of size 1");
+
 // power set
 
 static void testCreatingPowerSetFromEmptyTypeList() {
