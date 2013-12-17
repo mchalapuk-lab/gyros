@@ -15,6 +15,11 @@ template <class ...TypeLists>
 struct Permute {
 }; // struct Permute<TypeLists...>
 
+template <class ...Types>
+struct Permute<TypeList<Types...>> {
+  typedef TypeList<TypeList<Types>...> Type;
+}; // struct Permute<TypeList<Types...>>
+
 template <class LeftHead, class ...LeftTail, class RightSets>
 struct Permute<TypeList<LeftHead, LeftTail...>, RightSets> {
   typedef typename Permute<TypeList<LeftHead>, RightSets>::Type HeadPermuted;
@@ -22,27 +27,26 @@ struct Permute<TypeList<LeftHead, LeftTail...>, RightSets> {
   typedef typename Cat<HeadPermuted, TailPermuted>::Type Type;
 }; // struct Permute<TypeList<LeftHead, LeftTail...>, RightSets>
 
-template <class ...L, class ...R, class ...T>
-struct Permute<TypeList<TypeList<L...>>, TypeList<TypeList<R...>, T...>> {
-  typedef TypeList<TypeList<L..., R...>> HeadPermuted;
-  typedef typename Permute<TypeList<TypeList<L...>>, T...>::Type TailPermuted;
+template <class ...TypesInFirstListOfFirstSet,
+          class ...TypesInFirstListOfSecondSet,
+          class ...SecondSetTail>
+struct Permute<
+    TypeList<TypeList<TypesInFirstListOfFirstSet...>>,
+    TypeList<TypeList<TypesInFirstListOfSecondSet...>, SecondSetTail...>
+    > {
+  typedef TypeList<TypeList<TypesInFirstListOfFirstSet...,
+                            TypesInFirstListOfSecondSet...>> HeadPermuted;
+  typedef typename Permute<
+      TypeList<TypeList<TypesInFirstListOfFirstSet...>>,
+      TypeList<SecondSetTail...>
+          >::Type TailPermuted;
   typedef typename Cat<HeadPermuted, TailPermuted>::Type Type; 
-}; // struct Permute<TypeList<TypeList<L...>>, TypeList<TypeList<R...>, T...>>
+}; // struct (well, complicated...)
 
 template <class ...Types>
-struct Permute<TypeList<Types...>, TypeList<>> {
-  typedef TypeList<Types...> Type;
-}; // struct Permute<TypeList<Types...>, TypeList<>>
-
-template <class ...Types>
-struct Permute<TypeList<>, TypeList<Types...>> {
-  typedef TypeList<Types...> Type;
-}; // struct Permute<TypeList<>, TypeList<Types...>>
-
-template <class ...Types>
-struct Permute<TypeList<Types...>> {
-  typedef TypeList<TypeList<Types>...> Type;
-}; // struct Permute<TypeList<Types...>>
+struct Permute<TypeList<TypeList<Types...>>, TypeList<>> {
+  typedef TypeList<> Type;
+}; // struct Permute<TypeList<TypeList<Types...>>, TypeList<>>
 
 template <>
 struct Permute<TypeList<>> {

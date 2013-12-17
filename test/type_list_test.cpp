@@ -1,3 +1,6 @@
+// author: Maciej Chałapuk
+// license: Apache2
+// vim: ts=2 sw=2 expandtab
 #include "gyros/util/type_list.hpp"
 
 #include <type_traits>
@@ -10,6 +13,11 @@ using Member = test::gyros::component::OneMemberComponent<Type>;
 using Mock = test::gyros::component::MockComponent;
 
 using namespace gyros::util::type_list;
+
+/*
+ * All tests in this file are executed during compile time ^^
+ * All functions are static (not visible outside this file) and never called.
+ */
 
 // size
 
@@ -99,6 +107,67 @@ static_assert(Size<typename Permute<TypeList<>>::Type>::value == 0,
               "test permutations of emptylist is empty list");
 static_assert(Size<typename Permute<TypeList<Simple>>::Type>::value == 1,
               "test permutations of singleton is list is list of size 1");
+
+static void testCreatingPermutationsOfOneTypeList() {
+  typedef TypeList<TypeList<Simple>, TypeList<Member<int>>> ExpectedList;
+  typedef typename Permute<TypeList<Simple, Member<int>>>::Type ActualList;
+  static_assert(std::is_same<ExpectedList, ActualList>::value,
+                "test creating permutations of one typeList");
+}
+
+template <class ExpectedType, class ActualType>
+struct AssertIsSame {
+  static_assert(std::is_same<ExpectedType, ActualType>::value,
+                "type are not same");
+}; // struct AssertIsSame<ExpectedType, ActualType>
+
+static void testCreatingCartesianProductOfTypeListWithItself() {
+  typedef TypeList<
+      TypeList<Simple, Simple>,
+      TypeList<Simple, Member<int>>,
+      TypeList<Member<int>, Simple>,
+      TypeList<Member<int>, Member<int>>
+          > ExpectedList;
+  typedef typename Permute<TypeList<Simple, Member<int>>>::Type PermutedList;
+  typedef typename Permute<PermutedList, PermutedList>::Type ActualList;
+  AssertIsSame<ExpectedList, ActualList>();
+}
+static void testCreatingCartesianProductOfTwoTypeListsOfSameSize() {
+  typedef TypeList<
+      TypeList<Mock, Member<char>>,
+      TypeList<Mock, Member<int>>,
+      TypeList<Simple, Member<char>>,
+      TypeList<Simple, Member<int>>
+          > ExpectedList;
+  typedef typename Permute<TypeList<Mock, Simple>>::Type
+      FirstPermutedList;
+  typedef typename Permute<TypeList<Member<char>, Member<int>>>::Type
+      SecondPermutedList;
+  typedef typename Permute<FirstPermutedList, SecondPermutedList>::Type
+      ActualList;
+  AssertIsSame<ExpectedList, ActualList>();
+}
+static void testCreatingCartesianProductOfTwoTypeListsOfDifferentSizes() {
+  typedef TypeList<TypeList<Mock, Member<char>>, TypeList<Mock, Member<int>>>
+      ExpectedList;
+  typedef typename Permute<TypeList<Mock>>::Type
+      FirstPermutedList;
+  typedef typename Permute<TypeList<Member<char>, Member<int>>>::Type
+      SecondPermutedList;
+  typedef typename Permute<FirstPermutedList, SecondPermutedList>::Type
+      ActualList;
+  AssertIsSame<ExpectedList, ActualList>();
+}
+static void testCreatingCartesianProductOfThreeTypeLists() {
+  typedef TypeList<TypeList<Mock, Member<char>, Member<int>>> ExpectedList;
+  typedef typename Permute<TypeList<Mock>>::Type FirstPermutedList;
+  typedef typename Permute<TypeList<Member<char>>>::Type SecondPermutedList;
+  typedef typename Permute<TypeList<Member<int>>>::Type ThirdPermutedList;
+  typedef typename Permute<FirstPermutedList,
+                           SecondPermutedList,
+                           ThirdPermutedList>::Type ActualList;
+  AssertIsSame<ExpectedList, ActualList>();
+}
 
 // power set
 
