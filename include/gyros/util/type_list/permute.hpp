@@ -20,12 +20,20 @@ struct Permute<TypeList<Types...>> {
   typedef TypeList<TypeList<Types>...> Type;
 }; // struct Permute<TypeList<Types...>>
 
-template <class LeftHead, class ...LeftTail, class RightSets>
-struct Permute<TypeList<LeftHead, LeftTail...>, RightSets> {
-  typedef typename Permute<TypeList<LeftHead>, RightSets>::Type HeadPermuted;
-  typedef typename Permute<TypeList<LeftTail...>, RightSets>::Type TailPermuted;
+template <class FirstSet, class SecondSet, class ...Tail>
+struct Permute<FirstSet, SecondSet, Tail...> {
+  typedef typename Permute<FirstSet, SecondSet>::Type FirstPairPermuted;
+  typedef typename Permute<FirstPairPermuted, Tail...>::Type Type;
+}; // struct Permute<FirstSet, SecondSet, Tail...>
+
+template <class FirstSetHead, class ...FirstSetTail, class ...SecondSet>
+struct Permute<TypeList<FirstSetHead, FirstSetTail...>, TypeList<SecondSet...>>{
+  typedef typename Permute<TypeList<FirstSetHead>,
+                           TypeList<SecondSet...>>::Type HeadPermuted;
+  typedef typename Permute<TypeList<FirstSetTail...>,
+                           TypeList<SecondSet...>>::Type TailPermuted;
   typedef typename Cat<HeadPermuted, TailPermuted>::Type Type;
-}; // struct Permute<TypeList<LeftHead, LeftTail...>, RightSets>
+}; // struct Permute<TypeList<FirstSetHead, FirstSetTail...>, SecondSet>
 
 template <class ...TypesInFirstListOfFirstSet,
           class ...TypesInFirstListOfSecondSet,
