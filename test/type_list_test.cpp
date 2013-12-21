@@ -157,16 +157,3 @@ static void testCreatingCartesianProductOfThreeTypeLists() {
   AssertIsSame<ExpectedList, ActualList>();
 }
 
-// power set
-
-static void testCreatingPowerSetFromEmptyTypeList() {
-  typedef TypeList<TypeList<>> ExpectedSets;
-  typedef typename PowerSet<TypeList<>>::Type ActualSets;
-  AssertIsSame<ActualSets, ExpectedSets>();
-}
-static void testCreatingPowerSetFromSingletonTypeList() {
-  typedef TypeList<TypeList<>, TypeList<Simple>> ExpectedSets;
-  typedef typename PowerSet<TypeList<Simple>>::Type ActualSets;
-  AssertIsSame<ActualSets, ExpectedSets>();
-}
-
