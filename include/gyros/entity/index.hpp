@@ -9,10 +9,9 @@
 namespace gyros {
 namespace entity {
 
-template <class ...ComponentTypes>
+template <class ...ComponentTypeLists>
 struct Index {
-
-}; // struct Index<ComponentTypes...>
+}; // struct Index<ComponentTypeLists...>
 
 } // namespace entity
 } // namespace gyros
