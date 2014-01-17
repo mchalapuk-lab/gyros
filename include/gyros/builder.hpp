@@ -4,18 +4,19 @@
 #ifndef GYROS_SCENE_HPP_
 #define GYROS_SCENE_HPP_
 
-#include "gyros/builder.hpp"
 #include "gyros/component/rotor.hpp"
 #include "gyros/entity/index.hpp"
+#include "gyros/fwd/scene.hpp"
 
 namespace gyros {
 
 template <class ComponentRotorType, class EntityIndexType>
-struct Scene {
-}; // Scene<ComponentRotorType, EntityIndexType>
+struct SceneBuilder {
+  Scene<ComponentRotorType, EntityIndexType> build() const;
+}; // SceneBuilder<ComponentRotorType, EntityIndexType>
 
 template <class ...ComponentTypes, class ...IndexedTupleTypes>
-struct Scene<
+struct Builder<
     component::Rotor<ComponentTypes...>,
     entity::Index<IndexedTupleTypes...>
     > {
@@ -23,19 +24,18 @@ struct Scene<
   typedef component::Rotor<ComponentTypes...> RotorType;
   typedef entity::Index<IndexedTupleTypes...> IndexType;
 
-  Scene(Scene<RotorType, IndexType> && rhs) noexcept
-    : rotor_(std::move(rhs.rotor_)),
-      index_(std::move(rhs.index_)) {
+  template <class ...TypesInTuple>
+  SceneBuilder<
+      RotorType,
+      entity::Index<IndexedTupleTypes..., TypeList<TypesInTyple...>
+      >
+  withEntityIndex() {
+    return decltype(withEntityIndex<TypesInTuple...>())(); // TODO
   }
-
- private:
-  RotorType rotor_;
-  IndexType index_;
-
-  Scene(RotorType && rotor, IndexType && index)
-    : rotor_(std::move(rotor)), index_(std::move(index)) {
+  Scene<RotorType, IndexType> build() const {
+    return Scene<RotorType, IndexType>(); // TODO
   }
-}; // struct Scene<Rotor<ComponentTypes...>, Index<IndexedTupleTypes...>>
+}; // struct Builder<Rotor<ComponentTypes...>, Index<IndexedTupleTypes...>>
 
 } // namespace gyros
 
