@@ -6,6 +6,7 @@
 #include <type_traits>
 
 #include "test/gyros/components.hpp"
+#include "test/static_assert.hpp"
 
 using Simple = test::gyros::component::EmptyComponent;
 template <class Type>
@@ -13,11 +14,7 @@ using Member = test::gyros::component::OneMemberComponent<Type>;
 using Mock = test::gyros::component::MockComponent;
 
 using namespace gyros::util::type_list;
-
-template <class Expected, class Actual>
-struct AssertIsSame {
-  static_assert(std::is_same<Expected, Actual>::value, "type are not same");
-}; // struct AssertIsSame<Expected, Actual>
+using namespace test;
 
 /*
  * All tests in this file are executed during compile time ^^
@@ -62,6 +59,23 @@ static void testPushingBackToNotEmptyList() {
   typedef typename PushBack<TypeList<Simple>, Simple>::Type AfterPush;
   AssertIsSame<AfterPush, TypeList<Simple, Simple>>();
 }
+
+// contains
+
+static_assert(!Contains<TypeList<>, Simple>::value,
+              "test empty list doesnt contain any type");
+static_assert(!Contains<TypeList<Mock>, Simple>::value,
+              "test singleton list doesnt contain a type");
+static_assert(!Contains<TypeList<Mock, Mock>, Simple>::value,
+              "test 2-element list doesnt contain a type");
+static_assert(Contains<TypeList<Simple>, Simple>::value,
+              "test singleton list contains simple type");
+static_assert(Contains<TypeList<Simple, Mock>, Simple>::value,
+              "test list contains its first type");
+static_assert(Contains<TypeList<Simple, Mock>, Mock>::value,
+              "test list contains its last type");
+static_assert(Contains<TypeList<Simple, Mock, Simple>, Mock>::value,
+              "test list contains its middle type");
 
 // cat
 
