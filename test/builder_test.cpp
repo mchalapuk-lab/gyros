@@ -20,7 +20,9 @@ void test_entity_index_type_after_adding_one_index() {
   typedef Rotor<EmptyComponent> ExpectedRotorType;
   typedef Index<TypeList<EmptyComponent>> ExpectedIndexType;
   typedef Builder<ExpectedRotorType, ExpectedIndexType> ExpectedBuilder;
-  typedef decltype(SceneBuilder().withEntity<EmptyComponent>()) ActualBuilder;
+
+  SceneBuilder builder;
+  typedef decltype(builder.withEntityIndex<EmptyComponent>()) ActualBuilder;
   AssertIsSame<ExpectedBuilder, ActualBuilder>();
 }
 

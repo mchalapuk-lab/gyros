@@ -34,8 +34,8 @@ struct Builder<
       typename detail::AddTypesToRotor<RotorType, TypesInTuple...>::Type,
       entity::Index<IndexedTupleTypes..., TypeList<TypesInTuple...>>
       >
-  withEntity() {
-    return decltype(withEntity<TypesInTuple...>())();
+  withEntityIndex() {
+    return decltype(withEntityIndex<TypesInTuple...>())();
   }
 }; // struct Builder<Rotor<ComponentTypes...>, Index<IndexedTupleTypes...>>
 
