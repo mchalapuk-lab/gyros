@@ -1,8 +1,8 @@
 // author: Maciej Chałapuk
 // license: Apache2
 // vim: ts=2 sw=2 expandtab
-#ifndef GYROS_MAKE_BUILDER_TYPE_HPP_
-#define GYROS_MAKE_BUILDER_TYPE_HPP_
+#ifndef GYROS_DETAIL_MAKE_ROTOR_TYPE_HPP_
+#define GYROS_DETAIL_MAKE_ROTOR_TYPE_HPP_
 
 #include <type_traits>
 
@@ -11,8 +11,6 @@
 #include "gyros/util/type_list/cat.hpp"
 
 #include "gyros/fwd/component/rotor.hpp"
-#include "gyros/fwd/entity/index.hpp"
-#include "gyros/fwd/builder.hpp"
 
 namespace gyros {
 namespace detail {
@@ -21,20 +19,13 @@ template <class RotorType, class ...ComponentTypesToAdd>
 struct AddTypesToRotor {
 }; // struct AddTypesToRotor<RotorType, ComponentTypesToAdd...>
 
-} // namespace detail
-
 template <class ...TupleTypes>
-struct MakeBuilder {
-  typedef Builder<
-      typename detail::AddTypesToRotor<
-          component::Rotor<>,
-          typename util::type_list::Cat<TupleTypes...>::Type
-          >::Type,
-      entity::Index<TupleTypes...>
-      > Type;
-}; // MakeBuilderType<TupleTypes...>
-
-namespace detail {
+struct MakeRotor {
+  typedef typename detail::AddTypesToRotor<
+      component::Rotor<>,
+      typename util::type_list::Cat<TupleTypes...>::Type
+      >::Type Type;
+}; // MakeRotor<TupleTypes...>
 
 template <class ...ExistingTypes, class Head, class ...Tail>
 struct AddTypesToRotor<

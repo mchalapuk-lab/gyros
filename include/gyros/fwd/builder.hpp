@@ -6,7 +6,7 @@
 
 namespace gyros {
 
-template <class RotorType, class IndexType>
+template <class ...TupleTypes>
 struct Builder;
 
 } // namespace gyros

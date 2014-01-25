@@ -10,21 +10,16 @@
 #include "gyros/entity/index.hpp"
 #include "gyros/scene.hpp"
 
+#include "gyros/detail/make_rotor_type.hpp"
+
 namespace gyros {
 
-template <class ComponentRotorType, class EntityIndexType>
-struct Builder {
-}; // Builder<ComponentRotorType, EntityIndexType>
-
-template <class ...ComponentTypes, class ...IndexedTupleTypes>
-struct Builder<
-    component::Rotor<ComponentTypes...>,
-    entity::Index<IndexedTupleTypes...>
-    > {
+template <class ...TupleTypes>
+class Builder {
  public:
-  typedef component::Rotor<ComponentTypes...> RotorType;
-  typedef entity::Index<IndexedTupleTypes...> IndexType;
-}; // struct Builder<Rotor<ComponentTypes...>, Index<IndexedTupleTypes...>>
+  typedef typename detail::MakeRotor<TupleTypes...>::Type RotorType;
+  typedef entity::Index<TupleTypes...> IndexType;
+}; // Builder<TupleTypes...>
 
 } // namespace gyros
 
