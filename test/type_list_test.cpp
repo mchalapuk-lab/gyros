@@ -49,6 +49,21 @@ void testGettingEightTest() {
   AssertIsSame<typename Get<List, 7>::Type, Simple>();
 }
 
+// back
+
+static_assert(
+    std::is_same<typename Back<TypeList<Simple>>::Type, Simple>::value,
+    "test getting back type of singleton list"
+    );
+static_assert(
+    std::is_same<typename Back<TypeList<Simple, Mock>>::Type, Mock>::value,
+    "test getting back type of 2-element list"
+    );
+void testGettingBackTypeOfEightElementList() {
+  typedef TypeList<Mock, Mock, Mock, Mock, Mock, Mock, Mock, Simple> List;
+  AssertIsSame<typename Back<List>::Type, Simple>();
+}
+
 // push back
 
 static void testPushingBackToEmptyList() {

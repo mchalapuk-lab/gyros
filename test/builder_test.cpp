@@ -11,6 +11,8 @@ using TypeList = gyros::util::type_list::TypeList<Types...>;
 using Simple = test::gyros::component::EmptyComponent;
 using Mock = test::gyros::component::MockComponent;
 
+// static tests
+
 static
 void test_rotor_type_in_builder_type_with_one_component() {
   typedef gyros::component::Rotor<Simple> ExpectedRotorType;
@@ -46,4 +48,7 @@ void test_rotor_type_in_builder_type_with_two_tuples_with_recurring_types() {
       >::RotorType ActualRotorType;
   test::AssertIsSame<ExpectedRotorType, ActualRotorType>();
 }
+
+// dynamic tests
+
 
