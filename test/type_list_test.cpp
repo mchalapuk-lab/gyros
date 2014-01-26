@@ -75,6 +75,17 @@ static void testPushingBackToNotEmptyList() {
   AssertIsSame<AfterPush, TypeList<Simple, Simple>>();
 }
 
+// pop back
+
+static void testPoppingBackSimngletonList() {
+  typedef typename PopBack<TypeList<Simple>>::Type AfterPop;
+  AssertIsSame<AfterPop, TypeList<>>();
+}
+static void testPoppingBack2ElementList() {
+  typedef typename PopBack<TypeList<Simple, Mock>>::Type AfterPop;
+  AssertIsSame<AfterPop, TypeList<Simple>>();
+}
+
 // contains
 
 static_assert(!Contains<TypeList<>, Simple>::value,
@@ -184,5 +195,27 @@ static void testCreatingCartesianProductOfThreeTypeLists() {
                            SecondPermutedList,
                            ThirdPermutedList>::Type ActualList;
   AssertIsSame<ExpectedList, ActualList>();
+}
+
+// cast
+
+static void testCastingEmptyListToTuple() {
+  typedef std::tuple<> ExpectedType;
+  typedef typename Cast<std::tuple, TypeList<>>::Type ActualType;
+  AssertIsSame<ExpectedType, ActualType>();
+}
+
+static void testCastingSingletonListToTuple() {
+  typedef std::tuple<Simple> ExpectedType;
+  typedef typename Cast<std::tuple, TypeList<Simple>>::Type ActualType;
+  AssertIsSame<ExpectedType, ActualType>();
+}
+
+static void testCasting3ElementListToTuple() {
+  typedef std::tuple<Simple, Mock, Member<int>>
+      ExpectedType;
+  typedef typename Cast<std::tuple, TypeList<Simple, Mock, Member<int>>>::Type
+      ActualType;
+  AssertIsSame<ExpectedType, ActualType>();
 }
 
