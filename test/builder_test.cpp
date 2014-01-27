@@ -51,4 +51,11 @@ void test_rotor_type_in_builder_type_with_two_tuples_with_recurring_types() {
 
 // dynamic tests
 
+class gyros_Builder : public ::testing::TestWithParam<ptrdiff_t> {
+};
+
+TEST_F(gyros_Builder, test_building_scene_with_one_component) {
+  gyros::Builder<TypeList<Simple>> builder;
+  builder.newEntity().emplace<Simple>();
+}
 

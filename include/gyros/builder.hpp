@@ -4,66 +4,37 @@
 #ifndef GYROS_BUILDER_HPP_
 #define GYROS_BUILDER_HPP_
 
-#include "gyros/fwd/builder.hpp"
+#include "gyros/util/type_list/type_list.hpp"
 
 #include "gyros/component/rotor.hpp"
 #include "gyros/entity/index.hpp"
+#include "gyros/entity/builder.hpp"
 #include "gyros/scene.hpp"
-#include "gyros/util/type_list/back.hpp"
 
 #include "gyros/detail/make_rotor_type.hpp"
-#include "gyros/component/detail/rotor_creator.hpp"
+#include "gyros/fwd/builder.hpp"
 
 namespace gyros {
+namespace tl = util::type_list;
 
-template <class ...ComponentTypes>
-class EntityBuilder {
- public:
-  EntityBuilder() {
-  }
-  template <class ComponentType, class ...ArgTypes>
-  EntityBuilder<ComponentTypes..., ComponentType> emplace(ArgTypes&&... args) {
-    auto factory = std::bind(
-        &component::detail::emplace<ComponentType, ArgTypes...>,
-        std::placeholders::_1,
-        std::forward<ArgTypes>(args)...
-        );
-    return EntityBuilder<ComponentTypes..., ComponentType>(factory);
-  }
- private:
-  typedef typename util::type_list::Back<ComponentTypes...>::Type
-      LastComponentType;
-  std::function<LastComponentType *(void *)> factory_;  
-
-  template <class FactoryType>
-  EntityBuilder(FactoryType factory) : factory_(factory) {
-  }
-}; // EntityBuilder<ComponentTypes...>
-
-template <>
-class EntityBuilder<> {
- public:
-  template <class ComponentType, class ...ArgTypes>
-  EntityBuilder<ComponentType> emplace(ArgTypes&&... args) {
-    auto factory = std::bind(
-        &component::detail::emplace<ComponentType, ArgTypes...>,
-        std::placeholders::_1,
-        std::forward<ArgTypes>(args)...
-        );
-    return EntityBuilder<ComponentType>(factory);
-  }
-}; // EntityBuilder<>
-
-template <class ...TupleTypes>
+template <class ...EntityTypes>
 class Builder {
  public:
-  typedef typename detail::MakeRotor<TupleTypes...>::Type RotorType;
-  typedef entity::Index<TupleTypes...> IndexType;
-  
-  EntityBuilder<TupleTypes...> newEntity() {
-    return EntityBuilder<TupleTypes...>();
+  typedef typename detail::MakeRotor<EntityTypes...>::Type RotorType;
+  typedef entity::Index<EntityTypes...> IndexType;
+  typedef Builder<EntityTypes...> Type;
+
+  entity::Builder<Type, tl::TypeList<>> newEntity() { 
+    return entity::Builder<Type, tl::TypeList<>>(*this);
   }
-}; // Builder<TupleTypes...>
+  template <class EntityType>
+  Builder& addEntity(entity::Builder<Type, EntityType> &&entityBuilder) {
+    static_assert(
+        tl::Contains<tl::TypeList<EntityTypes...>, EntityType>::value,
+        "type of built entity doesn't match entity types of this builder"
+        );
+  }
+}; // Builder<EntityTypes...>
 
 } // namespace gyros
 
