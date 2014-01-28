@@ -4,58 +4,19 @@
 #include "gyros/builder.hpp"
 
 #include "test/gyros/components.hpp"
-#include "test/static_assert.hpp"
 
 template <class ...Types>
 using TypeList = gyros::util::type_list::TypeList<Types...>;
 using Simple = test::gyros::component::EmptyComponent;
 using Mock = test::gyros::component::MockComponent;
 
-// static tests
-
-static
-void test_rotor_type_in_builder_type_with_one_component() {
-  typedef gyros::component::Rotor<Simple> ExpectedRotorType;
-  typedef typename gyros::Builder<TypeList<Simple>>::RotorType ActualRotorType;
-  test::AssertIsSame<ExpectedRotorType, ActualRotorType>();
-}
-
-static
-void test_rotor_type_in_builder_with_two_components() {
-  typedef gyros::component::Rotor<Simple, Mock>
-      ExpectedRotorType;
-  typedef typename gyros::Builder<TypeList<Simple, Mock>>::RotorType
-      ActualRotorType;
-  test::AssertIsSame<ExpectedRotorType, ActualRotorType>();
-}
-
-static
-void test_rotor_type_in_builder_with_two_tuples() {
-  typedef gyros::component::Rotor<Simple, Mock>
-      ExpectedRotorType;
-  typedef typename gyros::Builder<TypeList<Simple>, TypeList<Mock>>::RotorType
-      ActualRotorType;
-  test::AssertIsSame<ExpectedRotorType, ActualRotorType>();
-}
-
-static
-void test_rotor_type_in_builder_type_with_two_tuples_with_recurring_types() {
-  typedef gyros::component::Rotor<Simple, Mock>
-      ExpectedRotorType;
-  typedef typename gyros::Builder<
-      TypeList<Simple>,
-      TypeList<Simple, Mock>
-      >::RotorType ActualRotorType;
-  test::AssertIsSame<ExpectedRotorType, ActualRotorType>();
-}
-
-// dynamic tests
-
 class gyros_Builder : public ::testing::TestWithParam<ptrdiff_t> {
 };
 
 TEST_F(gyros_Builder, test_building_scene_with_one_component) {
   gyros::Builder<TypeList<Simple>> builder;
-  builder.newEntity().emplace<Simple>();
+  builder.newEntity()
+      .emplace<Simple>();
+  auto scene = builder.build();
 }
 

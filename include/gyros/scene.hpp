@@ -4,26 +4,20 @@
 #ifndef GYROS_SCENE_HPP_
 #define GYROS_SCENE_HPP_
 
-#include "gyros/builder.hpp"
 #include "gyros/component/rotor.hpp"
 #include "gyros/entity/index.hpp"
 
+#include "gyros/detail/make_rotor_type.hpp"
+
 namespace gyros {
 
-template <class ComponentRotorType, class EntityIndexType>
-struct Scene {
-}; // Scene<ComponentRotorType, EntityIndexType>
-
-template <class ...ComponentTypes, class ...IndexedTupleTypes>
-struct Scene<
-    component::Rotor<ComponentTypes...>,
-    entity::Index<IndexedTupleTypes...>
-    > {
+template <class ...EntityTypes>
+class Scene {
  public:
-  typedef component::Rotor<ComponentTypes...> RotorType;
-  typedef entity::Index<IndexedTupleTypes...> IndexType;
+  typedef typename detail::MakeRotor<EntityTypes...>::Type RotorType;
+  typedef entity::Index<EntityTypes...> IndexType;
 
-  Scene(Scene<RotorType, IndexType> && rhs) noexcept
+  Scene(Scene &&rhs) noexcept
     : rotor_(std::move(rhs.rotor_)),
       index_(std::move(rhs.index_)) {
   }
@@ -35,7 +29,7 @@ struct Scene<
   Scene(RotorType && rotor, IndexType && index)
     : rotor_(std::move(rotor)), index_(std::move(index)) {
   }
-}; // struct Scene<Rotor<ComponentTypes...>, Index<IndexedTupleTypes...>>
+}; // class Scene<EntityTypes...>
 
 } // namespace gyros
 

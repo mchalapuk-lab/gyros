@@ -3,58 +3,51 @@
 // vim: ts=2 sw=2 expandtab
 #include "gyros/scene.hpp"
 
-#include "test/component.hpp"
-#include "test/tuple/mock_visitor.hpp"
-#include "test/visitor_wrapper.hpp"
+#include "test/gyros/components.hpp"
+#include "test/static_assert.hpp"
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+template <class ...Types>
+using TypeList = gyros::util::type_list::TypeList<Types...>;
+using Simple = test::gyros::component::EmptyComponent;
+using Mock = test::gyros::component::MockComponent;
 
-using namespace gyros;
-using namespace test::gyros;
-using namespace test::gyros::tuple;
-using namespace testing;
+// static tests
 
-class gyros_Scene : public ::testing::TestWithParam<size_t> {
-  void SetUp() {
-    CountingComponent::resetCounters();
-  }
-};
-
-TEST_F(gyros_Scene, test_constructor_called_once) {
-  SceneBuilder<CountingComponent> builder;
-  builder.newEntity().emplace<CountingComponent>();
-  auto scene = builder.build();
-
-  ASSERT_EQ(1, CountingComponent::constructor_calls);
+static
+void test_rotor_type_in_builder_type_with_one_component() {
+  typedef gyros::component::Rotor<Simple> ExpectedRotorType;
+  typedef typename gyros::Scene<TypeList<Simple>>::RotorType ActualRotorType;
+  test::AssertIsSame<ExpectedRotorType, ActualRotorType>();
 }
 
-TEST_F(gyros_Scene, test_destructor_called_once_after_destroying_scene) {
-  {
-    SceneBuilder<CountingComponent> builder;
-    builder.newEntity().emplace<CountingComponent>();
-    auto scene = builder.build();
-  }
-  ASSERT_EQ(1, CountingComponent::destructor_calls);
+static
+void test_rotor_type_in_builder_with_two_components() {
+  typedef gyros::component::Rotor<Simple, Mock>
+      ExpectedRotorType;
+  typedef typename gyros::Scene<TypeList<Simple, Mock>>::RotorType
+      ActualRotorType;
+  test::AssertIsSame<ExpectedRotorType, ActualRotorType>();
 }
 
-TEST_F(gyros_Scene, test_destructor_not_called_when_scene_not_destroyed) {
-  SceneBuilder<CountingComponent> builder;
-  builder.newEntity().emplace<CountingComponent>();
-  auto scene = builder.build();
-
-  ASSERT_EQ(0, CountingComponent::destructor_calls);
+static
+void test_rotor_type_in_builder_with_two_tuples() {
+  typedef gyros::component::Rotor<Simple, Mock>
+      ExpectedRotorType;
+  typedef typename gyros::Scene<TypeList<Simple>, TypeList<Mock>>::RotorType
+      ActualRotorType;
+  test::AssertIsSame<ExpectedRotorType, ActualRotorType>();
 }
 
-TEST_F(gyros_Scene, test_visitor_called_one_time_if_one_entity_created) {
-  SceneBuilder<EmptyComponent> builder;
-  builder.newEntity().emplace<EmptyComponent>();
-  auto scene = builder.build();
-
-  MockVisitor mock_visitor;
-  EXPECT_CALL(mock_visitor, call(An<EmptyComponent const&>()))
-    .Times(1);
-  
-  scene.visitReadonly<EmptyComponent>(wrap(mock_visitor));
+static
+void test_rotor_type_in_builder_type_with_two_tuples_with_recurring_types() {
+  typedef gyros::component::Rotor<Simple, Mock>
+      ExpectedRotorType;
+  typedef typename gyros::Scene<
+      TypeList<Simple>,
+      TypeList<Simple, Mock>
+      >::RotorType ActualRotorType;
+  test::AssertIsSame<ExpectedRotorType, ActualRotorType>();
 }
+
+// dynamic tests
 

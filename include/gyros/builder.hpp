@@ -4,14 +4,12 @@
 #ifndef GYROS_BUILDER_HPP_
 #define GYROS_BUILDER_HPP_
 
-#include "gyros/util/type_list/type_list.hpp"
-
+#include "gyros/util/type_list.hpp"
 #include "gyros/component/rotor.hpp"
 #include "gyros/entity/index.hpp"
 #include "gyros/entity/builder.hpp"
 #include "gyros/scene.hpp"
 
-#include "gyros/detail/make_rotor_type.hpp"
 #include "gyros/fwd/builder.hpp"
 
 namespace gyros {
@@ -19,22 +17,45 @@ namespace tl = util::type_list;
 
 template <class ...EntityTypes>
 class Builder {
- public:
-  typedef typename detail::MakeRotor<EntityTypes...>::Type RotorType;
-  typedef entity::Index<EntityTypes...> IndexType;
-  typedef Builder<EntityTypes...> Type;
+}; // Builder<EntitytTypes...>
 
-  entity::Builder<Type, tl::TypeList<>> newEntity() { 
-    return entity::Builder<Type, tl::TypeList<>>(*this);
+template <class HeadEntityType, class ...TailEntityTypes> 
+class Builder<HeadEntityType, TailEntityTypes...>
+  : public Builder<TailEntityTypes...> {
+ public:
+  typedef TypeTraits<Builder<HeadEntityType, TailEntityTypes...>> Traits;
+  typedef typename Traits::Type Type;
+  typedef typename Traits::SuperType SuperType;
+  typedef typename Traits::SceneType SceneType;
+  typedef typename Traits::EmptyEntityBuilderType EmptyEntityBuilderType;
+  typedef typename Traits::EntityBuilderType EntityBuilderType;
+
+  EmptyEntityBuilderType newEntity() {
+    return EmptyEntityBuilderType(*this);
   }
-  template <class EntityType>
-  Builder& addEntity(entity::Builder<Type, EntityType> &&entityBuilder) {
-    static_assert(
-        tl::Contains<tl::TypeList<EntityTypes...>, EntityType>::value,
-        "type of built entity doesn't match entity types of this builder"
-        );
+  SceneType build() {
+    throw "not implemented"; // TODO
   }
-}; // Builder<EntityTypes...>
+
+  Builder& addEntity(EntityBuilderType &&entity_builder) {
+    entity_builders_.emplace_back(std::move(entity_builder));
+  }
+ private:
+  std::vector<EntityBuilderType> entity_builders_;
+}; // Builder<HeadEntityType, TailEntityTypes...>
+
+template <> 
+class Builder<> {
+}; // Builder<>
+
+template <class HeadType, class ...TailTypes> 
+struct TypeTraits<Builder<HeadType, TailTypes...>> {
+  typedef Builder<HeadType, TailTypes...> Type;
+  typedef Builder<TailTypes...> SuperType;
+  typedef Scene<HeadType, TailTypes...> SceneType;
+  typedef entity::Builder<Type, tl::TypeList<>> EmptyEntityBuilderType;
+  typedef entity::Builder<Type, HeadType> EntityBuilderType;
+}; // TypeTraits<Builder<HeadType, TailTypes...>
 
 } // namespace gyros
 
