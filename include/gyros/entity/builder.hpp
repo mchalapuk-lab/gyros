@@ -38,14 +38,15 @@ class Builder<SceneBuilderType, tl::TypeList<ComponentTypes...>>
   Builder(BaseSuperType &&previousStep,
           SceneBuilderType &builder,
           FactoryType factory)
-    : BaseType(std::move(previousStep), std::move(factory)),
+    : BaseType(std::move(previousStep), std::forward<FactoryType>(factory)),
       scene_builder_(builder),
-      destroyer_([this] { scene_builder_.addEntity(std::move(*this)); }) {
+      destroyer_(std::bind(&Type::finalize, this)) {
   }
   Builder(Builder &&rhs)
     : BaseType(std::move(rhs)),
       scene_builder_(rhs.scene_builder_),
-      destroyer_([this] { scene_builder_.addEntity(std::move(*this)); }) {
+      destroyer_(std::bind(&Type::finalize, this)) {
+    rhs.destroyer_ = [] {};
   }
   ~Builder() {
     destroyer_();
@@ -61,15 +62,19 @@ class Builder<SceneBuilderType, tl::TypeList<ComponentTypes...>>
 
     destroyer_ = [] {};
     return ExtendWith<ComponentType>(
-        std::move(* static_cast<BaseType*>(this)),
+        std::move(*this),
         scene_builder_,
-        factory
+        std::move(factory)
         );
   }
 
  private:
   SceneBuilderType &scene_builder_;
   std::function<void ()> destroyer_;
+
+  void finalize() {
+    scene_builder_.addEntity(BaseType(std::move(*this)));
+  }
 }; // Builder<SceneBuilderType, TypeList<ComponentTypes...>>
 
 template <class SceneBuilderType>
@@ -96,9 +101,9 @@ class Builder<SceneBuilderType, tl::TypeList<>>
         );
 
     return ExtendWith<ComponentType>(
-        std::move(* static_cast<BaseType*>(this)),
+        std::move(*this),
         scene_builder_,
-        factory
+        std::move(factory)
         );
   }
 

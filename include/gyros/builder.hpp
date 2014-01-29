@@ -54,7 +54,7 @@ struct TypeTraits<Builder<HeadType, TailTypes...>> {
   typedef Builder<TailTypes...> SuperType;
   typedef Scene<HeadType, TailTypes...> SceneType;
   typedef entity::Builder<Type, tl::TypeList<>> EmptyEntityBuilderType;
-  typedef entity::Builder<Type, HeadType> EntityBuilderType;
+  typedef typename entity::Builder<Type, HeadType>::BaseType EntityBuilderType;
 }; // TypeTraits<Builder<HeadType, TailTypes...>
 
 } // namespace gyros
