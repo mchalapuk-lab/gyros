@@ -17,6 +17,9 @@ class Scene {
   typedef typename detail::MakeRotor<EntityTypes...>::Type RotorType;
   typedef entity::Index<EntityTypes...> IndexType;
 
+  Scene(RotorType && rotor, IndexType && index)
+    : rotor_(std::move(rotor)), index_(std::move(index)) {
+  }
   Scene(Scene &&rhs) noexcept
     : rotor_(std::move(rhs.rotor_)),
       index_(std::move(rhs.index_)) {
@@ -25,10 +28,6 @@ class Scene {
  private:
   RotorType rotor_;
   IndexType index_;
-
-  Scene(RotorType && rotor, IndexType && index)
-    : rotor_(std::move(rotor)), index_(std::move(index)) {
-  }
 }; // class Scene<EntityTypes...>
 
 } // namespace gyros

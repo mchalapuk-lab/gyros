@@ -38,12 +38,23 @@ class BuilderBase<tl::TypeList<ComponentTypes...>>
       factory_(std::move(rhs.factory_)) {
   }
 
+  template <class RotorBuilderType>
+  void addFactoriesTo(RotorBuilderType &rotor_builder) const {
+    // emplacing in reverse order because most base class have first element
+    // just for elegance since emplacing order is completely irrelevant
+    static_cast<SuperType const*>(this)->addFactoriesTo(rotor_builder);
+    rotor_builder.template addFactory<LastComponentType>(factory_);
+  }
  private:
-  std::function<LastComponentType *(void *)> factory_;  
+  std::function<LastComponentType *(void *)> factory_;
 }; // struct BuilderBase<TypeList<ComponentTypes...>>
 
 template <>
 struct BuilderBase<tl::TypeList<>> {
+  template <class RotorBuilderType>
+  void addFactoriesTo(RotorBuilderType) const {
+    // no op
+  }
 }; // struct BuilderBase<TypeList<>>
 
 } // namespace detail

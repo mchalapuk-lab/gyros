@@ -29,12 +29,17 @@ class Builder<HeadEntityType, TailEntityTypes...>
   typedef typename Traits::SceneType SceneType;
   typedef typename Traits::EmptyEntityBuilderType EmptyEntityBuilderType;
   typedef typename Traits::EntityBuilderType EntityBuilderType;
+  typedef typename SceneType::RotorType RotorType;
+  typedef typename SceneType::IndexType IndexType;
+  typedef typename RotorType::BuilderType RotorBuilderType;
 
   EmptyEntityBuilderType newEntity() {
     return EmptyEntityBuilderType(*this);
   }
   SceneType build() {
-    throw "not implemented"; // TODO
+    RotorBuilderType builder;
+    addFactoriesTo(builder);
+    return SceneType(builder.build(), IndexType());
   }
 
   Builder& addEntity(EntityBuilderType &&entity_builder) {
@@ -42,6 +47,14 @@ class Builder<HeadEntityType, TailEntityTypes...>
   }
  private:
   std::vector<EntityBuilderType> entity_builders_;
+
+  void addFactoriesTo(RotorBuilderType &builder) const {
+    for (auto it = entity_builders_.begin(), end = entity_builders_.end();
+         it != end;
+         ++it) {
+      it->addFactoriesTo(builder);
+    }
+  }
 }; // Builder<HeadEntityType, TailEntityTypes...>
 
 template <> 

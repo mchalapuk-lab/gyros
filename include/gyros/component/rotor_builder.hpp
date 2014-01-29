@@ -31,17 +31,23 @@ class RotorBuilder<T, L...> : private RotorBuilder<L...> {
         std::placeholders::_1,
         std::forward<ArgTypes>(args)...
         );
+    return addFactory<EmplacedComponentType>(std::move(factory));
+  }
+
+  template <class EmplacedComponentType, class FactoryType>
+  RotorBuilder<T, L...>& addFactory(FactoryType factory) {
     typedef typename detail::FindSubtype<RotorBuilder,
                                          EmplacedComponentType,
                                          T, L...>::type BuilderType;
-    static_cast<BuilderType *>(this)->factories_.push_back(factory);
+    BuilderType *that = static_cast<BuilderType *>(this);
+    that->factories_.push_back(std::forward<FactoryType>(factory));
     return *this;
   }
+
   RotorType build() const {
     detail::RotorCreator<RotorType, T, L...> create;
     return create(*this);
   }
-
  private:
   std::vector<std::function<T *(void *)>> factories_;
 

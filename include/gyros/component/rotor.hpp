@@ -38,6 +38,7 @@ struct Rotor<T, L...> : private RotorBase<T, L...> {
       PoolGetter, CapacityGetter, PositionResolver, RotorLock
       > ReadWriteState;
   typedef Rotor<T, L...> RotorType;
+  typedef RotorBuilder<T, L...> BuilderType;
 
   Rotor(Rotor<T, L...> &&rhs) noexcept
       : RotorBase<T, L...>(std::move(rhs)),
