@@ -8,6 +8,7 @@ namespace gyros {
 
 template <class Type>
 struct TypeTraits {
+  typedef Type* IteratorType;
 }; // struct TypeTraits<Type>
 
 } // namespace gyros
