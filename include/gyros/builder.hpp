@@ -37,9 +37,9 @@ class Builder<HeadEntityType, TailEntityTypes...>
     return EmptyEntityBuilderType(*this);
   }
   SceneType build() {
-    RotorBuilderType builder;
-    addFactoriesTo(builder);
-    return SceneType(builder.build(), IndexType());
+    RotorBuilderType rotor_builder;
+    addFactoriesTo(rotor_builder);
+    return SceneType(rotor_builder.build(), IndexType());
   }
 
   Builder& addEntity(EntityBuilderType &&entity_builder) {
@@ -48,17 +48,22 @@ class Builder<HeadEntityType, TailEntityTypes...>
  private:
   std::vector<EntityBuilderType> entity_builders_;
 
-  void addFactoriesTo(RotorBuilderType &builder) const {
+  void addFactoriesTo(RotorBuilderType &rotor_builder) const {
     for (auto it = entity_builders_.begin(), end = entity_builders_.end();
          it != end;
          ++it) {
-      it->addFactoriesTo(builder);
+      it->addFactoriesTo(rotor_builder);
     }
+    SuperType const* that = static_cast<SuperType const*>(this);
+    that->addFactoriesTo(rotor_builder);
   }
 }; // Builder<HeadEntityType, TailEntityTypes...>
 
 template <> 
-class Builder<> {
+struct Builder<> {
+  template <class RotorBuilderType>
+  void addFactoriesTo(RotorBuilderType) const {
+  }
 }; // Builder<>
 
 template <class HeadType, class ...TailTypes> 
