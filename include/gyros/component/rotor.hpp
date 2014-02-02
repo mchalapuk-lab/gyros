@@ -12,10 +12,12 @@
 #include "gyros/component/rotor_state.hpp"
 #include "gyros/component/iterator.hpp"
 #include "gyros/util/type_literal.hpp"
+#include "gyros/util/type_list/type_list.hpp"
 #include "gyros/fwd/component/rotor.hpp"
 
 namespace gyros {
 namespace component {
+namespace tl = util::type_list;
 
 template <class ...ComponentTypes>
 struct Rotor {
@@ -38,6 +40,7 @@ struct Rotor<T, L...> : private RotorBase<T, L...> {
       PoolGetter, CapacityGetter, PositionResolver, RotorLock
       > ReadWriteState;
   typedef Rotor<T, L...> RotorType;
+  typedef tl::TypeList<T, L...> TypeList;
   typedef RotorBuilder<T, L...> BuilderType;
 
   Rotor(Rotor<T, L...> &&rhs) noexcept

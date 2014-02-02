@@ -7,6 +7,7 @@
 #include "gyros/util/type_list.hpp"
 #include "gyros/component/rotor.hpp"
 #include "gyros/entity/index.hpp"
+#include "gyros/entity/index_builder.hpp"
 #include "gyros/entity/builder.hpp"
 #include "gyros/scene.hpp"
 
@@ -30,39 +31,50 @@ class Builder<HeadEntityType, TailEntityTypes...>
   typedef typename Traits::EmptyEntityBuilderType EmptyEntityBuilderType;
   typedef typename Traits::EntityBuilderType EntityBuilderType;
   typedef typename SceneType::RotorType RotorType;
-  typedef typename SceneType::IndexType IndexType;
   typedef typename RotorType::BuilderType RotorBuilderType;
+  typedef typename SceneType::IndexType IndexType;
 
   EmptyEntityBuilderType newEntity() {
     return EmptyEntityBuilderType(*this);
   }
   SceneType build() {
     RotorBuilderType rotor_builder;
-    addFactoriesTo(rotor_builder);
-    return SceneType(rotor_builder.build(), IndexType());
+    auto index_builder = addFactoriesTo(rotor_builder,
+                                        entity::IndexBuilder<>());
+    RotorType rotor = rotor_builder.build();
+    IndexType index = index_builder.build(rotor);
+    return SceneType(std::move(rotor), std::move(index));
   }
 
   Builder& addEntity(EntityBuilderType &&entity_builder) {
     entity_builders_.emplace_back(std::move(entity_builder));
   }
- private:
-  std::vector<EntityBuilderType> entity_builders_;
 
-  void addFactoriesTo(RotorBuilderType &rotor_builder) const {
-    for (auto it = entity_builders_.begin(), end = entity_builders_.end();
-         it != end;
-         ++it) {
+ protected:
+  template <class IndexBuilderType>
+  entity::IndexBuilder<HeadEntityType, TailEntityTypes...>
+  addFactoriesTo(RotorBuilderType &rotor_builder,
+                 IndexBuilderType index_builder) const {
+    auto begin = entity_builders_.begin(), end = entity_builders_.end();
+    for (auto it = begin; it != end; ++it) {
       it->addFactoriesTo(rotor_builder);
     }
     SuperType const* that = static_cast<SuperType const*>(this);
-    that->addFactoriesTo(rotor_builder);
+    return that->addFactoriesTo(
+        rotor_builder,
+        index_builder.template setEntityCount<HeadEntityType>(end - begin)
+        );
   }
+ private:
+  std::vector<EntityBuilderType> entity_builders_;
 }; // Builder<HeadEntityType, TailEntityTypes...>
 
 template <> 
 struct Builder<> {
-  template <class RotorBuilderType>
-  void addFactoriesTo(RotorBuilderType) const {
+  template <class RotorBuilderType, class IndexBuilderType>
+  IndexBuilderType const& addFactoriesTo(RotorBuilderType,
+                                   IndexBuilderType const& builder) const {
+    return builder;
   }
 }; // Builder<>
 

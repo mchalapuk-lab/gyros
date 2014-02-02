@@ -4,38 +4,16 @@
 #ifndef GYROS_ENTITY_INDEX_HPP_
 #define GYROS_ENTITY_INDEX_HPP_
 
-#include "gyros/type_traits.hpp"
 #include "gyros/util/type_list.hpp"
+#include "gyros/entity/detail/iterators.hpp"
 
 namespace gyros {
-namespace entity {
 namespace tl = util::type_list;
-
-namespace detail {
-
-template <class ...ComponentTypes>
-struct Iterators {
-}; // struct Iterators<ComponentTypes>
-
-template <class HeadComponentType, class ...TailComponentTypes>
-class Iterators<HeadComponentType, TailComponentTypes...>
-  : private Iterators<TailComponentTypes...> {
- public:
-  typedef typename TypeTraits<HeadComponentType>::IteratorType IteratorType;
-
-  IteratorType begin_;
-  IteratorType end_;
-}; // class Iterators<HeadType, TailTypes>
-
-template <>
-struct Iterators<> {
-}; // struct Iterators<>
-
-} // namespace detail
+namespace entity {
 
 template <class ...EntityTypes>
 struct Index {
-}; // struct Index<EntityTypes...>
+}; // Index<EntityTypes...>
 
 template <class HeadEntityType, class ...TailEntityTypes>
 class Index<HeadEntityType, TailEntityTypes...>
@@ -46,15 +24,20 @@ class Index<HeadEntityType, TailEntityTypes...>
   typedef Index<TailEntityTypes...> SuperType;
 
   template <class ...ArgTypes>
-  Index(IteratorsType iterators, ArgTypes ...args)
+  Index(IteratorsType iterators, ArgTypes ...args) noexcept
     : SuperType(std::forward<ArgTypes>(args)...),
       iterators_(std::forward<IteratorsType>(iterators)) {
   }
-  Index() {}
-  
+  IteratorsType const& iterators() const noexcept {
+    return iterators_;
+  }
  private:
   IteratorsType iterators_;
 };
+
+template <>
+struct Index<> {
+}; // struct Index<>
 
 } // namespace entity
 } // namespace gyros
