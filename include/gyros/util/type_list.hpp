@@ -10,6 +10,7 @@
 #include "gyros/util/type_list/back.hpp"
 #include "gyros/util/type_list/push_back.hpp"
 #include "gyros/util/type_list/pop_back.hpp"
+#include "gyros/util/type_list/pop_front.hpp"
 #include "gyros/util/type_list/cat.hpp"
 #include "gyros/util/type_list/contains.hpp"
 #include "gyros/util/type_list/permute.hpp"

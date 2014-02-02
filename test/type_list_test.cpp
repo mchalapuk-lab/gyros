@@ -86,6 +86,17 @@ static void testPoppingBack2ElementList() {
   AssertIsSame<AfterPop, TypeList<Simple>>();
 }
 
+// pop front
+
+static void testPoppingFrontSimngletonList() {
+  typedef typename PopFront<TypeList<Simple>>::Type AfterPop;
+  AssertIsSame<AfterPop, TypeList<>>();
+}
+static void testPoppingFront2ElementList() {
+  typedef typename PopFront<TypeList<Simple, Mock>>::Type AfterPop;
+  AssertIsSame<AfterPop, TypeList<Mock>>();
+}
+
 // contains
 
 static_assert(!Contains<TypeList<>, Simple>::value,
