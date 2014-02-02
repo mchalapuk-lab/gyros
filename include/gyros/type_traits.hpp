@@ -4,11 +4,13 @@
 #ifndef GYROS_TYPE_TRAITS_HPP_
 #define GYROS_TYPE_TRAITS_HPP_
 
+#include "gyros/fwd/component/iterator.hpp"
+
 namespace gyros {
 
 template <class Type>
 struct TypeTraits {
-  typedef Type* IteratorType;
+  typedef component::PositionIterator<Type> IteratorType;
 }; // struct TypeTraits<Type>
 
 } // namespace gyros

@@ -69,13 +69,12 @@ struct Iterators<> {
 template <class ...ComponentTypes>
 struct TypeTraits<entity::detail::Iterators<ComponentTypes...>> {
   typedef tl::TypeList<ComponentTypes...> ComponentTypeList;
-  typedef typename tl::Cast<entity::detail::Iterators,
-                            ComponentTypeList>::Type Type;
+  typedef entity::detail::Iterators<ComponentTypes...> Type;
   typedef typename tl::PopFront<ComponentTypeList>::Type SuperComponentTypes;
+  typedef typename tl::Get<ComponentTypeList, 0>::Type HeadComponentType;
+  typedef typename TypeTraits<HeadComponentType>::IteratorType IteratorType;
   typedef typename tl::Cast<entity::detail::Iterators,
                             SuperComponentTypes>::Type SuperType;
-  typedef typename tl::Get<ComponentTypeList, 0>::Type HeadComponentType;
-  typedef component::PositionIterator<HeadComponentType> IteratorType;
 }; // struct TypeTraits<Iterators<ComponentTypes...>>
 
 } // namespace gyros
