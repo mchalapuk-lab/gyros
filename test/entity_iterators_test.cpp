@@ -1,7 +1,7 @@
 // author: Maciej Chałapuk
 // license: MIT
 // vim: ts=2 sw=2 expandtab
-#include "gyros/scene.hpp"
+#include "gyros/entity/detail/iterators.hpp"
 
 #include "gyros/util/type_list.hpp"
 #include "test/gyros/components.hpp"
@@ -82,4 +82,56 @@ void test_iterator_type_in_traits_of_iterators_with_three_components() {
 } // namespace
 
 // dynamic tests
+
+class entity_Iterators : public ::testing::TestWithParam<ptrdiff_t> {
+};
+
+TEST_F(entity_Iterators, test_creating_iterators_with_no_types) {
+  Iterators<> iterators;
+}
+TEST_F(entity_Iterators, test_creating_iterators_with_one_type) {
+  Iterators<Simple> iterators(nullptr, nullptr);
+}
+TEST_F(entity_Iterators, test_begin_method_returns_proper_iter) {
+  Simple *expected = static_cast<Simple *>(nullptr) + 16;
+  Iterators<Simple> iterators(expected, nullptr);
+  ASSERT_EQ(iterators.begin<0>(), expected);
+}
+TEST_F(entity_Iterators, test_end_method_returns_proper_iter) {
+  Simple *expected = static_cast<Simple *>(nullptr) + 16;
+  Iterators<Simple> iterators(nullptr, expected);
+  ASSERT_EQ(iterators.end<0>(), expected);
+}
+TEST_F(entity_Iterators, test_begin_method_on_first_type_returns_proper_iter) {
+  Mock *expected = static_cast<Mock *>(nullptr) + 16;
+  Iterators<Mock, Simple> iterators(expected, nullptr, nullptr, nullptr);
+  ASSERT_EQ(iterators.begin<0>(), expected);
+}
+TEST_F(entity_Iterators, test_end_method_on_first_type_returns_proper_iter) {
+  Mock *expected = static_cast<Mock *>(nullptr) + 16;
+  Iterators<Mock, Simple> iterators(nullptr, expected, nullptr, nullptr);
+  ASSERT_EQ(iterators.end<0>(), expected);
+}
+TEST_F(entity_Iterators, test_begin_method_on_last_type_returns_proper_iter) {
+  Simple *expected = static_cast<Simple *>(nullptr) + 16;
+  Iterators<Mock, Simple> iterators(nullptr, nullptr, expected, nullptr);
+  ASSERT_EQ(iterators.begin<1>(), expected);
+}
+TEST_F(entity_Iterators, test_end_method_on_last_type_returns_proper_iter) {
+  Simple *expected = static_cast<Simple *>(nullptr) + 16;
+  Iterators<Mock, Simple> iterators(nullptr, nullptr, nullptr, expected);
+  ASSERT_EQ(iterators.end<1>(), expected);
+}
+TEST_F(entity_Iterators, test_begin_method_on_middle_type_returns_proper_iter) {
+  Simple *expected = static_cast<Simple *>(nullptr) + 16;
+  Iterators<Mock, Simple, Member<int>> iterators(
+      nullptr, nullptr, expected, nullptr, nullptr, nullptr);
+  ASSERT_EQ(iterators.begin<1>(), expected);
+}
+TEST_F(entity_Iterators, test_end_method_on_middle_type_returns_proper_iter) {
+  Simple *expected = static_cast<Simple *>(nullptr) + 16;
+  Iterators<Mock, Simple, Member<int>> iterators(
+      nullptr, nullptr, nullptr, expected, nullptr, nullptr);
+  ASSERT_EQ(iterators.end<1>(), expected);
+}
 
