@@ -7,7 +7,7 @@
 #include "gyros/type_traits.hpp"
 #include "gyros/util/type_list.hpp"
 #include "gyros/util/type_literal.hpp"
-#include "gyros/entity/detail/iterators.hpp"
+#include "gyros/entity/iterators.hpp"
 
 namespace gyros {
 namespace tl = util::type_list;

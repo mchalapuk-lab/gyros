@@ -93,7 +93,7 @@ struct TypeTraits<entity::IndexBuilder<EntityTypes...>> {
       entity::detail::IndexBuildState, RotorTypeList
       >::Type BuildStateType;
   typedef typename tl::Get<EntityTypesList, 0>::Type HeadEntityType;
-  typedef typename tl::Cast<entity::detail::Iterators, HeadEntityType>::Type
+  typedef typename tl::Cast<entity::Iterators, HeadEntityType>::Type
       IteratorsType;
 }; // TypeTraits<IndexBuilder<EntityTypes...>>
 

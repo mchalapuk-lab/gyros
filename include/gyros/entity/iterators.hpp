@@ -1,8 +1,8 @@
 // author: Maciej Chałapuk
 // license: Apache2
 // vim: ts=2 sw=2 expandtab
-#ifndef GYROS_ENTITY_DETAIL_ITERATORS_HPP_
-#define GYROS_ENTITY_DETAIL_ITERATORS_HPP_
+#ifndef GYROS_ENTITY_ITERATORS_HPP_
+#define GYROS_ENTITY_ITERATORS_HPP_
 
 #include "gyros/type_traits.hpp"
 #include "gyros/util/type_list.hpp"
@@ -11,7 +11,6 @@
 namespace gyros {
 namespace tl = util::type_list;
 namespace entity {
-namespace detail {
 
 template <class ...ComponentTypes>
 struct Iterators {
@@ -57,18 +56,17 @@ template <>
 struct Iterators<> {
 }; // struct Iterators<>
 
-} // namespace detail
 } // namespace entity
 
 template <class ...ComponentTypes>
-struct TypeTraits<entity::detail::Iterators<ComponentTypes...>> {
+struct TypeTraits<entity::Iterators<ComponentTypes...>> {
   typedef tl::TypeList<ComponentTypes...> ComponentTypeList;
-  typedef entity::detail::Iterators<ComponentTypes...> Type;
+  typedef entity::Iterators<ComponentTypes...> Type;
   typedef typename tl::PopFront<ComponentTypeList>::Type SuperComponentTypes;
   typedef typename tl::Get<ComponentTypeList, 0>::Type HeadComponentType;
   typedef typename TypeTraits<HeadComponentType>::IteratorType IteratorType;
-  typedef typename tl::Cast<entity::detail::Iterators,
-                            SuperComponentTypes>::Type SuperType;
+  typedef typename tl::Cast<entity::Iterators, SuperComponentTypes>::Type
+      SuperType;
 }; // struct TypeTraits<Iterators<ComponentTypes...>>
 
 } // namespace gyros

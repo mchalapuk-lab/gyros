@@ -5,7 +5,7 @@
 #define GYROS_ENTITY_INDEX_HPP_
 
 #include "gyros/util/type_list.hpp"
-#include "gyros/entity/detail/iterators.hpp"
+#include "gyros/entity/iterators.hpp"
 
 namespace gyros {
 namespace tl = util::type_list;
@@ -19,8 +19,7 @@ template <class HeadEntityType, class ...TailEntityTypes>
 class Index<HeadEntityType, TailEntityTypes...>
   : private Index<TailEntityTypes...> {
  public:
-  typedef typename tl::Cast<detail::Iterators, HeadEntityType>::Type
-      IteratorsType;
+  typedef typename tl::Cast<Iterators, HeadEntityType>::Type IteratorsType;
   typedef Index<TailEntityTypes...> SuperType;
 
   template <class ...ArgTypes>

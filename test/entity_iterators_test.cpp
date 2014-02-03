@@ -1,7 +1,7 @@
 // author: Maciej Chałapuk
 // license: MIT
 // vim: ts=2 sw=2 expandtab
-#include "gyros/entity/detail/iterators.hpp"
+#include "gyros/entity/iterators.hpp"
 
 #include "gyros/util/type_list.hpp"
 #include "test/gyros/components.hpp"
@@ -15,7 +15,7 @@ using Mock = test::gyros::component::MockComponent;
 namespace tl = gyros::util::type_list;
 
 template <class ...Types>
-using Iterators = gyros::entity::detail::Iterators<Types...>;
+using Iterators = gyros::entity::Iterators<Types...>;
 template <class Type>
 using Traits = gyros::TypeTraits<Type>;
 
