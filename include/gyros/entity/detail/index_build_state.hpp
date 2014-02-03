@@ -4,6 +4,7 @@
 #ifndef GYROS_ENTITY_INDEX_BUILD_STATE_HPP_
 #define GYROS_ENTITY_INDEX_BUILD_STATE_HPP_
 
+#include "gyros/type_traits.hpp"
 #include "gyros/util/type_list.hpp"
 #include "gyros/util/type_literal.hpp"
 #include "gyros/component/iterator.hpp"
@@ -15,51 +16,67 @@ namespace entity {
 namespace detail {
 
 template <class ...ComponentTypes>
-struct BuildState {
-}; // struct BuildState<ComponentTypes...>
+struct IndexBuildState {
+}; // struct IndexBuildState<ComponentTypes...>
 
 template <class HeadComponentType, class ...TailComponentTypes>
-class BuildState<HeadComponentType, TailComponentTypes...>
-  : private BuildState<TailComponentTypes...> {
+class IndexBuildState<HeadComponentType, TailComponentTypes...>
+  : private IndexBuildState<TailComponentTypes...> {
  public:
-  typedef component::Rotor<HeadComponentType, TailComponentTypes...> RotorType;
-  typedef component::PositionIterator<HeadComponentType> IteratorType;
-  typedef tl::TypeList<HeadComponentType, TailComponentTypes...>
-      ComponentTypeList;
+  typedef IndexBuildState<HeadComponentType, TailComponentTypes...> Type;
+  typedef TypeTraits<Type> Traits;
+  typedef typename Traits::RotorType RotorType;
+  typedef typename Traits::ComponentTypeList ComponentTypeList;
+  typedef typename Traits::IteratorType IteratorType;
+  typedef typename Traits::SuperType SuperType;
 
-  BuildState(RotorType &rotor) noexcept
-      : BuildState<TailComponentTypes...>(rotor),
-        it_(rotor.template begin<HeadComponentType>()) {
+  template <class ComponentType>
+  using IndexOf = tl::IndexOf<ComponentTypeList, ComponentType>;
+
+  IndexBuildState(RotorType &rotor) noexcept
+      : SuperType(rotor), it_(rotor.template begin<HeadComponentType>()) {
   }
   template <class ComponentType>
   component::PositionIterator<ComponentType>& it() noexcept {
     static_assert(tl::Contains<ComponentTypeList, ComponentType>::value,
                   "requested component not contained in the type list");
-    return it(util::TypeLiteral<ComponentType>());
+    typedef typename GetAncestor<Type, IndexOf<ComponentType>::value>::Type
+        AncestorType;
+    return AncestorType::it_;
   }
 
  protected:
-  IteratorType& it(util::TypeLiteral<HeadComponentType>) noexcept {
-    return it_;
-  }
- private:
   IteratorType it_;
-}; // BuildState<HeadComponentType, TailComponentTypes...>
+}; // IndexBuildState<HeadComponentType, TailComponentTypes...>
 
 template <>
-struct BuildState<> {
+struct IndexBuildState<> {
   template <class RotorType>
-  BuildState(RotorType const&) {}
-}; // BuildState<>
+  IndexBuildState(RotorType const&) {}
+}; // IndexBuildState<>
 
 template <class ...ComponentTypes>
-BuildState<ComponentTypes...>
-makeBuildState(component::Rotor<ComponentTypes...> &rotor) {
-  return BuildState<ComponentTypes...>(rotor);
+IndexBuildState<ComponentTypes...>
+createIndexBuildState(component::Rotor<ComponentTypes...> &rotor) {
+  return IndexBuildState<ComponentTypes...>(rotor);
 }
 
 } // namespace detail
 } // namespace entity
+
+template <class ...ComponentTypes>
+struct TypeTraits<entity::detail::IndexBuildState<ComponentTypes...>> {
+  typedef entity::detail::IndexBuildState<ComponentTypes...> Type;
+  typedef component::Rotor<ComponentTypes...> RotorType;
+  typedef tl::TypeList<ComponentTypes...> ComponentTypeList;
+  typedef typename tl::Get<ComponentTypeList, 0>::Type HeadComponentType;
+  typedef typename TypeTraits<HeadComponentType>::IteratorType IteratorType;
+  typedef typename tl::PopFront<ComponentTypeList>::Type SuperTypeList;
+  typedef typename tl::Cast<
+      entity::detail::IndexBuildState, SuperTypeList
+      >::Type SuperType;
+}; // struct TypeTraits<IndexBuildState<ComponentTypes...>>
+
 } // namespace gyros
 
 #endif // include guard

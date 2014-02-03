@@ -15,6 +15,7 @@ add_executable (${PROJECT_NAME}-tests
   scene_test.cpp
   entity_iterators_test.cpp
   index_test.cpp
+  index_build_state_test.cpp
 )
 target_link_libraries (${PROJECT_NAME}-tests gmock pthread)
 

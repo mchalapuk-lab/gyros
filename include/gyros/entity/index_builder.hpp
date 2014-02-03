@@ -46,7 +46,7 @@ class IndexBuilder
     return ExtendWith<EntityType>(*this, entity_count);
   }
   IndexType build(RotorType &rotor) noexcept {
-    auto state = detail::makeBuildState(rotor);
+    auto state = detail::createIndexBuildState(rotor);
     return createIndex<IndexType>(state);
   }
 
@@ -89,8 +89,9 @@ struct TypeTraits<entity::IndexBuilder<EntityTypes...>> {
       SuperType;
   typedef typename detail::MakeRotor<EntityTypes...>::Type RotorType;
   typedef typename RotorType::TypeList RotorTypeList;
-  typedef typename tl::Cast<entity::detail::BuildState, RotorTypeList>::Type
-      BuildStateType;
+  typedef typename tl::Cast<
+      entity::detail::IndexBuildState, RotorTypeList
+      >::Type BuildStateType;
   typedef typename tl::Get<EntityTypesList, 0>::Type HeadEntityType;
   typedef typename tl::Cast<entity::detail::Iterators, HeadEntityType>::Type
       IteratorsType;
