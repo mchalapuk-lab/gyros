@@ -97,6 +97,22 @@ static void testPoppingFront2ElementList() {
   AssertIsSame<AfterPop, TypeList<Mock>>();
 }
 
+// index of
+
+static_assert(IndexOf<TypeList<>, Simple>::value == -1,
+              "test index of in empty list equals -1");
+static_assert(IndexOf<TypeList<Mock>, Simple>::value == -1,
+              "test index of in singleton list equals -1");
+static_assert(IndexOf<TypeList<Mock, Mock>, Simple>::value == -1,
+              "test index of in 2-element list equals -1");
+static_assert(IndexOf<TypeList<Simple>, Simple>::value == 0,
+              "test index of in singleton list equals 0");
+static_assert(IndexOf<TypeList<Simple, Mock>, Simple>::value == 0,
+              "test index of in a 2-element list equals 0");
+static_assert(IndexOf<TypeList<Simple, Mock>, Mock>::value == 1,
+              "test index of in a 2-element list equals 1");
+static_assert(IndexOf<TypeList<Simple, Mock, Simple>, Mock>::value == 1,
+              "test index of in a 3-element list equals 1");
 // contains
 
 static_assert(!Contains<TypeList<>, Simple>::value,
@@ -215,13 +231,11 @@ static void testCastingEmptyListToTuple() {
   typedef typename Cast<std::tuple, TypeList<>>::Type ActualType;
   AssertIsSame<ExpectedType, ActualType>();
 }
-
 static void testCastingSingletonListToTuple() {
   typedef std::tuple<Simple> ExpectedType;
   typedef typename Cast<std::tuple, TypeList<Simple>>::Type ActualType;
   AssertIsSame<ExpectedType, ActualType>();
 }
-
 static void testCasting3ElementListToTuple() {
   typedef std::tuple<Simple, Mock, Member<int>>
       ExpectedType;
