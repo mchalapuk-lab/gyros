@@ -6,6 +6,7 @@
 #include "gyros/util/type_list.hpp"
 #include "test/gyros/components.hpp"
 #include "test/static_assert.hpp"
+#include "test/gyros/component/mock_rotor.hpp"
 
 template <class Type>
 using Member = test::gyros::component::OneMemberComponent<Type>;
@@ -98,4 +99,18 @@ void test_super_type_in_traits_of_build_state_with_three_components() {
 }
 
 } // namespace
+
+// dynamic test
+
+template <class ...Types>
+using MockRotor = test::gyros::component::MockRotor<Types...>;
+
+class entity_IndexBuildState : public ::testing::TestWithParam<ptrdiff_t> {
+};
+
+TEST_F(entity_IndexBuildState, test_building_state_with_one_component) {
+  MockRotor<Simple> rotor;
+  IndexBuildState<Simple> tested_state(rotor);
+}
+
 
