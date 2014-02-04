@@ -46,18 +46,17 @@ class IndexBuilder
     return ExtendWith<EntityType>(*this, entity_count);
   }
   IndexType build(RotorType &rotor) noexcept {
-    auto state = detail::createIndexBuildState(rotor);
-    return createIndex<IndexType>(state);
+    return createIndex<IndexType>(BuildStateType(rotor));
   }
 
  protected:
   template <class CreatedIndexType, class ...ArgTypes>
-  CreatedIndexType createIndex(BuildStateType &state,
+  CreatedIndexType createIndex(BuildStateType &&state,
                                ArgTypes... args) const noexcept {
     auto iterators = detail::createIterators<HeadEntityType>(state,
                                                              entity_count_);
     SuperType const* that = static_cast<SuperType const*>(this);
-    return that->createIndex<CreatedIndexType>(state,
+    return that->createIndex<CreatedIndexType>(std::move(state),
                                                std::forward<ArgTypes>(args)...,
                                                std::move(iterators));
   }
@@ -72,7 +71,7 @@ struct IndexBuilder<> {
     return IndexBuilder<EntityType>(*this, entity_count);
   }
   template <class IndexType, class BuildStateType, class ...ArgTypes>
-  IndexType createIndex(BuildStateType&, ArgTypes... args) const noexcept {
+  IndexType createIndex(BuildStateType&&, ArgTypes... args) const noexcept {
     return IndexType(std::forward<ArgTypes>(args)...);
   }
 }; // struct IndexBuilder<>
