@@ -20,8 +20,15 @@ struct MockRotor {
 
 template <class HeadType, class ...TailTypes>
 struct MockRotor<HeadType, TailTypes...> : public MockRotor<TailTypes...> {
-  template <class Type> using TypeLiteral = ::gyros::util::TypeLiteral<Type>;
-  typedef typename ::gyros::TypeTraits<HeadType>::IteratorType IteratorType;
+  typedef ::gyros::TypeTraits<MockRotor<HeadType, TailTypes...>> Traits;
+  typedef typename Traits::HeadComponentType HeadComponentType;
+  typedef typename Traits::IteratorType IteratorType;
+  typedef typename Traits::SuperType SuperType;
+
+  template <class Type>
+  using TypeLiteral = ::gyros::util::TypeLiteral<Type>;
+  using SuperType::begin;
+  using SuperType::end;
 
   MOCK_METHOD1_T(begin, IteratorType (TypeLiteral<HeadType>));
   MOCK_METHOD1_T(end, IteratorType (TypeLiteral<HeadType>));
@@ -38,11 +45,32 @@ struct MockRotor<HeadType, TailTypes...> : public MockRotor<TailTypes...> {
 
 template<>
 struct MockRotor<> {
+  struct Unused {};
+  void begin(::gyros::util::TypeLiteral<Unused>) {}
+  void end(::gyros::util::TypeLiteral<Unused>) {}
 }; // struct MockRotor<>
 
 } // namespace component
 } // namespace gyros
 } // namespace test
+
+namespace gyros {
+namespace tl = util::type_list;
+
+template <class ...Types>
+struct TypeTraits<test::gyros::component::MockRotor<Types...>> {
+  template <class ...T>
+  using MockRotor = test::gyros::component::MockRotor<T...>;
+
+  typedef MockRotor<Types...> Type;
+  typedef tl::TypeList<Types...> ComponentTypes;
+  typedef typename tl::Get<ComponentTypes, 0>::Type HeadComponentType;
+  typedef typename TypeTraits<HeadComponentType>::IteratorType IteratorType;
+  typedef typename tl::PopFront<ComponentTypes>::Type SuperComponentTypes;
+  typedef typename tl::Cast<MockRotor, SuperComponentTypes>::Type SuperType;
+}; // TypeTraits<MockRotor<Types...>>
+
+} // namespace gyros
 
 #endif // include guard
 

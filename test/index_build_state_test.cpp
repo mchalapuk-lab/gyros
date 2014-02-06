@@ -113,4 +113,9 @@ TEST_F(entity_IndexBuildState, test_building_state_with_one_component) {
   IndexBuildState<Simple> tested_state(rotor);
 }
 
+TEST_F(entity_IndexBuildState, test_building_state_with_three_components) {
+  MockRotor<Simple, Mock, Member<int>> rotor;
+  IndexBuildState<Simple, Mock, Member<int>> tested_state(rotor);
+}
+
 
