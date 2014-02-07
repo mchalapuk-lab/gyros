@@ -29,6 +29,8 @@ struct MockRotor<HeadType, TailTypes...> : public MockRotor<TailTypes...> {
   using TypeLiteral = ::gyros::util::TypeLiteral<Type>;
   using SuperType::begin;
   using SuperType::end;
+  using SuperType::gmock_begin;
+  using SuperType::gmock_end;
 
   MOCK_METHOD1_T(begin, IteratorType (TypeLiteral<HeadType>));
   MOCK_METHOD1_T(end, IteratorType (TypeLiteral<HeadType>));
@@ -48,6 +50,8 @@ struct MockRotor<> {
   struct Unused {};
   void begin(::gyros::util::TypeLiteral<Unused>) {}
   void end(::gyros::util::TypeLiteral<Unused>) {}
+  void gmock_begin(::gyros::util::TypeLiteral<Unused>) {}
+  void gmock_end(::gyros::util::TypeLiteral<Unused>) {}
 }; // struct MockRotor<>
 
 } // namespace component

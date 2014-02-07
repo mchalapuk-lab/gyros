@@ -20,7 +20,7 @@ struct IndexBuildState {
 
 template <class HeadComponentType, class ...TailComponentTypes>
 class IndexBuildState<HeadComponentType, TailComponentTypes...>
-  : private IndexBuildState<TailComponentTypes...> {
+  : protected IndexBuildState<TailComponentTypes...> {
  public:
   typedef IndexBuildState<HeadComponentType, TailComponentTypes...> Type;
   typedef TypeTraits<Type> Traits;
@@ -37,7 +37,7 @@ class IndexBuildState<HeadComponentType, TailComponentTypes...>
   }
 
   template <class ComponentType>
-  component::PositionIterator<ComponentType>& it() noexcept {
+  typename TypeTraits<ComponentType>::IteratorType& it() noexcept {
     static_assert(tl::Contains<ComponentTypeList, ComponentType>::value,
                   "requested component not contained in the type list");
     typedef typename GetAncestor<Type, IndexOf<ComponentType>::value>::Type
