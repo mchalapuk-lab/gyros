@@ -15,49 +15,49 @@ namespace component {
 template <class IteratorType>
 class IteratorFacade {
  public:
-  bool operator== (IteratorType const& rhs) const {
+  bool operator== (IteratorType const& rhs) const noexcept {
     return derived_this().equals(rhs);
   }
-  bool operator!= (IteratorType const& rhs) const {
+  bool operator!= (IteratorType const& rhs) const noexcept {
     return !(*this == rhs);
   }
 
-  ptrdiff_t operator- (IteratorType const& rhs) const {
+  ptrdiff_t operator- (IteratorType const& rhs) const noexcept {
     return derived_this().difference(rhs);
   }
 
-  IteratorType operator+ (ptrdiff_t diff) const {
+  IteratorType operator+ (ptrdiff_t diff) const noexcept {
     IteratorType copy = derived_this();
     copy.increment(diff);
     return copy;
   }
-  IteratorType operator- (ptrdiff_t diff) const {
+  IteratorType operator- (ptrdiff_t diff) const noexcept {
     return *this + (-diff);
   }
 
-  IteratorType operator++ (int) {
+  IteratorType operator++ (int) noexcept {
     IteratorType copy = derived_this();
     derived_this().increment(1);
     return copy;
   }
-  IteratorType operator-- (int) {
+  IteratorType operator-- (int) noexcept {
     IteratorType copy = derived_this();
     derived_this().increment(-1);
     return copy;
   }
 
-  IteratorType& operator+= (ptrdiff_t diff) {
+  IteratorType& operator+= (ptrdiff_t diff) noexcept {
     derived_this().increment(diff);
     return derived_this();
   }
-  IteratorType& operator-= (ptrdiff_t diff) {
+  IteratorType& operator-= (ptrdiff_t diff) noexcept {
     return *this += -diff;
   }
 
-  IteratorType& operator++ () {
+  IteratorType& operator++ () noexcept {
     return *this += 1;
   }
-  IteratorType& operator-- () {
+  IteratorType& operator-- () noexcept {
     return *this -= 1;
   }
 
@@ -79,13 +79,13 @@ class PositionIterator : public IteratorFacade<PositionIterator<ComponentType>> 
     : ptr_(ptr) {
   }
 
-  void increment(ptrdiff_t diff) {
+  void increment(ptrdiff_t diff) noexcept {
     ptr_ += diff;
   }
-  ptrdiff_t difference(IteratorType const& rhs) const {
+  ptrdiff_t difference(IteratorType const& rhs) const noexcept {
     return ptr_ - rhs.ptr_;
   }
-  bool equals(PositionIterator<ComponentType> const& rhs) const {
+  bool equals(PositionIterator<ComponentType> const& rhs) const noexcept {
     return ptr_ == rhs.ptr_;
   }
  protected:
@@ -100,10 +100,10 @@ class ReadingIterator : public PositionIterator<ComponentType> {
       read_offset_(read_offset) {
   }
 
-  ComponentType const& operator* () const {
+  ComponentType const& operator* () const noexcept {
     return *operator->();
   }
-  ComponentType const* operator->() const {
+  ComponentType const* operator->() const noexcept {
     return this->ptr_ + read_offset_;
   }
  private:
@@ -121,7 +121,9 @@ class WritingIterator : public PositionIterator<ComponentType> {
   }
 
   template <class WritingVisitorType>
-  void visit(WritingVisitorType visit) {
+  void visit(WritingVisitorType visit)
+  noexcept(noexcept(visit(std::declval<ComponentType&>(),
+                          std::declval<ComponentType&>()))) {
     return visit(
         *(this->ptr_ + data_->read_offset_),
         *const_cast<ComponentType*>(this->ptr_ + data_->write_offset_)

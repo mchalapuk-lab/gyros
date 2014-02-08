@@ -108,7 +108,18 @@ template <class Type>
 using TypeLiteral = gyros::util::TypeLiteral<Type>;
 using namespace ::testing;
 
-class entity_IndexBuildState : public ::testing::TestWithParam<ptrdiff_t> {
+struct entity_IndexBuildState : public ::testing::TestWithParam<ptrdiff_t> {
+  entity_IndexBuildState()
+      : diff(1024),
+      begin0(Traits<Simple>::IteratorType() + diff),
+      begin1(Traits<Complex>::IteratorType() + diff * 2),
+      begin2(Traits<Member<int>>::IteratorType() + diff * 3) {
+  }
+  ptrdiff_t diff = 1024;
+
+  Traits<Simple>::IteratorType begin0;
+  Traits<Complex>::IteratorType begin1;
+  Traits<Member<int>>::IteratorType begin2;
 };
 
 TEST_F(entity_IndexBuildState, test_creating_state_with_one_component) {
@@ -123,37 +134,217 @@ TEST_F(entity_IndexBuildState, test_creating_state_with_three_components) {
 
 TEST_F(entity_IndexBuildState,
        test_iterator_value_after_constructing_state_with_one_component) {
-  Traits<Simple>::IteratorType expected;
-  expected += 1024;
-
   MockRotor<Simple> rotor;
   EXPECT_CALL(rotor, begin(A<TypeLiteral<Simple>>()))
-      .WillOnce(Return(expected));
+      .WillOnce(Return(begin0));
 
   IndexBuildState<Simple> tested_state(rotor);
-  ASSERT_EQ(expected, tested_state.it<Simple>());
+  ASSERT_EQ(begin0, tested_state.it<Simple>());
+}
+
+TEST_F(entity_IndexBuildState,
+       test_first_it_value_after_constructing_state_with_three_component) {
+
+  MockRotor<Simple, Complex, Member<int>> rotor;
+  EXPECT_CALL(rotor, begin(A<TypeLiteral<Simple>>()))
+      .WillOnce(Return(begin0));
+
+  IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
+  ASSERT_EQ(begin0, tested_state.it<Simple>());
+}
+
+TEST_F(entity_IndexBuildState,
+       test_third_it_value_after_constructing_state_with_three_component) {
+
+  MockRotor<Simple, Complex, Member<int>> rotor;
+  EXPECT_CALL(rotor, begin(A<TypeLiteral<Complex>>()))
+      .WillOnce(Return(begin1));
+
+  IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
+  ASSERT_EQ(begin1, tested_state.it<Complex>());
 }
 
 TEST_F(entity_IndexBuildState,
        test_iterator_value_after_constructing_state_with_three_component) {
-  Traits<Simple>::IteratorType expected0;
-  expected0 += 1024;
-  Traits<Complex>::IteratorType expected1;
-  expected1 += 1024;
-  Traits<Member<int>>::IteratorType expected2;
-  expected2 += 1024;
+
+  MockRotor<Simple, Complex, Member<int>> rotor;
+  EXPECT_CALL(rotor, begin(A<TypeLiteral<Member<int>>>()))
+      .WillOnce(Return(begin2));
+
+  IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
+  ASSERT_EQ(begin2, tested_state.it<Member<int>>());
+}
+
+TEST_F(entity_IndexBuildState,
+       test_iterator_value_after_intcrementing_on_state_with_one_component) {
+  auto expected = begin0 + diff;
+
+  MockRotor<Simple> rotor;
+  EXPECT_CALL(rotor, begin(A<TypeLiteral<Simple>>()))
+      .WillOnce(Return(begin0));
+
+  IndexBuildState<Simple> tested_state(rotor);
+  ASSERT_EQ(expected, tested_state.increment<Simple>(diff));
+  ASSERT_EQ(expected, tested_state.it<Simple>());
+}
+
+TEST_F(entity_IndexBuildState,
+       test_first_it_value_after_incrementing_on_state_with_three_component) {
+  auto expected0 = begin0 + diff;
 
   MockRotor<Simple, Complex, Member<int>> rotor;
   EXPECT_CALL(rotor, begin(A<TypeLiteral<Simple>>()))
-      .WillOnce(Return(expected0));
-  EXPECT_CALL(rotor, begin(A<TypeLiteral<Complex>>()))
-      .WillOnce(Return(expected1));
-  EXPECT_CALL(rotor, begin(A<TypeLiteral<Member<int>>>()))
-      .WillOnce(Return(expected2));
+      .WillOnce(Return(begin0));
 
   IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
+  ASSERT_EQ(expected0, tested_state.increment<Simple>(diff));
   ASSERT_EQ(expected0, tested_state.it<Simple>());
+}
+
+TEST_F(entity_IndexBuildState,
+       test_second_itr_value_after_incrementing_on_state_with_three_component) {
+  auto expected1 = begin1 + diff;
+
+  MockRotor<Simple, Complex, Member<int>> rotor;
+  EXPECT_CALL(rotor, begin(A<TypeLiteral<Complex>>()))
+      .WillOnce(Return(begin1));
+
+  IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
+  ASSERT_EQ(expected1, tested_state.increment<Complex>(diff));
   ASSERT_EQ(expected1, tested_state.it<Complex>());
+}
+
+TEST_F(entity_IndexBuildState,
+       test_third_it_value_after_incrementing_on_state_with_three_component) {
+  auto expected2 = begin2 + diff;
+
+  MockRotor<Simple, Complex, Member<int>> rotor;
+  EXPECT_CALL(rotor, begin(A<TypeLiteral<Member<int>>>()))
+      .WillOnce(Return(begin2));
+
+  IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
+  ASSERT_EQ(expected2, tested_state.increment<Member<int>>(diff));
   ASSERT_EQ(expected2, tested_state.it<Member<int>>());
+}
+
+TEST_F(entity_IndexBuildState,
+       test_iterator_value_after_intcrementing_twice_on_state_with_one_comp) {
+  auto expected = begin0 + diff;
+
+  MockRotor<Simple> rotor;
+  EXPECT_CALL(rotor, begin(A<TypeLiteral<Simple>>()))
+      .WillOnce(Return(begin0));
+
+  IndexBuildState<Simple> tested_state(rotor);
+  ASSERT_EQ(expected, tested_state.increment<Simple>(diff));
+  ASSERT_EQ(expected, tested_state.it<Simple>());
+}
+
+TEST_F(entity_IndexBuildState,
+       test_first_it_value_after_incrementing_twice_on_state_with_three_comp) {
+  auto expected0 = begin0 + 2*diff;
+
+  MockRotor<Simple, Complex, Member<int>> rotor;
+  EXPECT_CALL(rotor, begin(A<TypeLiteral<Simple>>()))
+      .WillOnce(Return(begin0));
+
+  IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
+  tested_state.increment<Simple>(diff);
+  ASSERT_EQ(expected0, tested_state.increment<Simple>(diff));
+  ASSERT_EQ(expected0, tested_state.it<Simple>());
+}
+
+TEST_F(entity_IndexBuildState,
+       test_second_it_value_after_incrementing_twice_on_state_with_three_comp) {
+  auto expected1 = begin1 + 2*diff;
+
+  MockRotor<Simple, Complex, Member<int>> rotor;
+  EXPECT_CALL(rotor, begin(A<TypeLiteral<Complex>>()))
+      .WillOnce(Return(begin1));
+
+  IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
+  tested_state.increment<Complex>(diff);
+  ASSERT_EQ(expected1, tested_state.increment<Complex>(diff));
+  ASSERT_EQ(expected1, tested_state.it<Complex>());
+}
+
+TEST_F(entity_IndexBuildState,
+       test_third_it_value_after_incrementing_twice_on_state_with_three_comp) {
+  auto expected2 = begin2 + 2*diff;
+
+  MockRotor<Simple, Complex, Member<int>> rotor;
+  EXPECT_CALL(rotor, begin(A<TypeLiteral<Member<int>>>()))
+      .WillOnce(Return(begin2));
+
+  IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
+  tested_state.increment<Member<int>>(diff);
+  ASSERT_EQ(expected2, tested_state.increment<Member<int>>(diff));
+  ASSERT_EQ(expected2, tested_state.it<Member<int>>());
+}
+
+TEST_F(entity_IndexBuildState,
+       test_first_it_unchanged_after_incr_second_on_state_with_three_comp) {
+  MockRotor<Simple, Complex, Member<int>> rotor;
+  EXPECT_CALL(rotor, begin(A<TypeLiteral<Simple>>()))
+      .WillOnce(Return(begin0));
+
+  IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
+  tested_state.increment<Complex>(diff);
+  ASSERT_EQ(begin0, tested_state.it<Simple>());
+}
+
+TEST_F(entity_IndexBuildState,
+       test_first_it_unchanged_after_incr_third_on_state_with_three_comp) {
+  MockRotor<Simple, Complex, Member<int>> rotor;
+  EXPECT_CALL(rotor, begin(A<TypeLiteral<Simple>>()))
+      .WillOnce(Return(begin0));
+
+  IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
+  tested_state.increment<Member<int>>(diff);
+  ASSERT_EQ(begin0, tested_state.it<Simple>());
+}
+
+TEST_F(entity_IndexBuildState,
+       test_second_it_unchanged_after_incr_first_on_state_with_three_comp) {
+  MockRotor<Simple, Complex, Member<int>> rotor;
+  EXPECT_CALL(rotor, begin(A<TypeLiteral<Complex>>()))
+      .WillOnce(Return(begin1));
+
+  IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
+  tested_state.increment<Simple>(diff);
+  ASSERT_EQ(begin1, tested_state.it<Complex>());
+}
+
+TEST_F(entity_IndexBuildState,
+       test_second_it_unchanged_after_incr_third_on_state_with_three_comp) {
+  MockRotor<Simple, Complex, Member<int>> rotor;
+  EXPECT_CALL(rotor, begin(A<TypeLiteral<Complex>>()))
+      .WillOnce(Return(begin1));
+
+  IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
+  tested_state.increment<Member<int>>(diff);
+  ASSERT_EQ(begin1, tested_state.it<Complex>());
+}
+
+TEST_F(entity_IndexBuildState,
+       test_third_it_unchanged_after_incr_first_on_state_with_three_comp) {
+  MockRotor<Simple, Complex, Member<int>> rotor;
+  EXPECT_CALL(rotor, begin(A<TypeLiteral<Member<int>>>()))
+      .WillOnce(Return(begin2));
+
+  IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
+  tested_state.increment<Simple>(diff);
+  ASSERT_EQ(begin2, tested_state.it<Member<int>>());
+}
+
+TEST_F(entity_IndexBuildState,
+       test_third_it_unchanged_after_incr_second_on_state_with_three_comp) {
+  MockRotor<Simple, Complex, Member<int>> rotor;
+  EXPECT_CALL(rotor, begin(A<TypeLiteral<Member<int>>>()))
+      .WillOnce(Return(begin2));
+
+  IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
+  tested_state.increment<Complex>(diff);
+  ASSERT_EQ(begin2, tested_state.it<Member<int>>());
 }
 

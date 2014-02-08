@@ -26,10 +26,8 @@ class IteratorsCreator
   IteratorsType operator() (BuildStateType &state,
                             size_t entity_count,
                             ArgTypes... args) const noexcept {
-    auto &it = state.template it<HeadComponentType>();
-    auto begin = it;
-    it += entity_count;
-    auto end = it;
+    auto begin = state.template it<HeadComponentType>();
+    auto end = state.template increment<HeadComponentType>(entity_count);
 
     SuperType const* that = static_cast<SuperType const*>(this);
     return that->operator()

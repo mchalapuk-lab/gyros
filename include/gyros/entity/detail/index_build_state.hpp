@@ -37,12 +37,24 @@ class IndexBuildState<HeadComponentType, TailComponentTypes...>
   }
 
   template <class ComponentType>
-  typename TypeTraits<ComponentType>::IteratorType& it() noexcept {
+  typename TypeTraits<ComponentType>::IteratorType const& it() const noexcept {
     static_assert(tl::Contains<ComponentTypeList, ComponentType>::value,
                   "requested component not contained in the type list");
     typedef typename GetAncestor<Type, IndexOf<ComponentType>::value>::Type
         AncestorType;
     return AncestorType::it_;
+  }
+  template <class ComponentType>
+  typename TypeTraits<ComponentType>::IteratorType const&
+  increment(size_t diff) noexcept {
+    static_assert(tl::Contains<ComponentTypeList, ComponentType>::value,
+                  "requested component not contained in the type list");
+    static_assert(noexcept(std::declval<decltype(it<ComponentType>())>()
+                           + std::declval<size_t>()),
+                  "IteratorType must have noexcept operator+");
+    typedef typename GetAncestor<Type, IndexOf<ComponentType>::value>::Type
+        AncestorType;
+    return AncestorType::it_ += diff;
   }
  protected:
   IteratorType it_;
