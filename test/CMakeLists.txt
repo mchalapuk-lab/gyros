@@ -11,11 +11,12 @@ add_executable (${PROJECT_NAME}-tests
   rotor_state_test.cpp
   rotor_test.cpp
   type_list_test.cpp
+  entity_iterators_test.cpp
+  index_build_state_test.cpp
+  index_builder_test.cpp
+  index_test.cpp
   builder_test.cpp
   scene_test.cpp
-  entity_iterators_test.cpp
-  index_test.cpp
-  index_build_state_test.cpp
 )
 target_link_libraries (${PROJECT_NAME}-tests gmock pthread)
 

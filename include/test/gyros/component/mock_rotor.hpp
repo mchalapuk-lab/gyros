@@ -21,6 +21,7 @@ struct MockRotor {
 template <class HeadType, class ...TailTypes>
 struct MockRotor<HeadType, TailTypes...> : public MockRotor<TailTypes...> {
   typedef ::gyros::TypeTraits<MockRotor<HeadType, TailTypes...>> Traits;
+  typedef typename Traits::ComponentTypes TypeList;
   typedef typename Traits::HeadComponentType HeadComponentType;
   typedef typename Traits::IteratorType IteratorType;
   typedef typename Traits::SuperType SuperType;

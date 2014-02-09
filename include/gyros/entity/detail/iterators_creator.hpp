@@ -5,9 +5,9 @@
 #define GYROS_ENTITY_DETAIL_ITERATORS_CREATOR_HPP_
 
 #include "gyros/type_traits.hpp"
-#include "gyros/util/type_list.hpp"
 #include "gyros/util/type_literal.hpp"
-#include "gyros/entity/iterators.hpp"
+#include "gyros/util/type_list.hpp"
+#include "gyros/fwd/entity/iterators.hpp"
 
 namespace gyros {
 namespace tl = util::type_list;
@@ -45,13 +45,16 @@ struct IteratorsCreator<tl::TypeList<>, IteratorsType> {
   }
 }; // struct IteratorsCreator<TypeList<>, IteratorsType>
 
-template <class EntityType,
-          class BuildStateType,
-          class IteratorsType = typename tl::Cast<Iterators, EntityType>::Type>
-IteratorsType createIterators(BuildStateType &state, size_t entity_count) {
-  IteratorsCreator<EntityType,
-                   typename tl::Cast<Iterators, EntityType>::Type> create;
-  create(state, entity_count);
+template <class EntityType>
+struct MakeIterators {
+  typedef typename tl::Cast<Iterators, EntityType>::Type Type;
+}; // struct MakeIterators<EntityType>
+
+template <class EntityType, class BuildStateType>
+typename MakeIterators<EntityType>::Type createIterators(BuildStateType &state,
+                                                         size_t entity_count) {
+  IteratorsCreator<EntityType, typename MakeIterators<EntityType>::Type> create;
+  return create(state, entity_count);
 }
 
 } // namespace detail

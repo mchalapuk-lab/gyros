@@ -17,7 +17,7 @@ namespace entity {
 
 template <class ...EntityTypes>
 class IndexBuilder
-  : private TypeTraits<IndexBuilder<EntityTypes...>>::SuperType {
+  : protected TypeTraits<IndexBuilder<EntityTypes...>>::SuperType {
  public:
   typedef TypeTraits<IndexBuilder<EntityTypes...>> Traits;
   typedef typename Traits::Type Type;
@@ -50,26 +50,29 @@ class IndexBuilder
   }
 
  protected:
+  using SuperType::createIndex;
+
   template <class CreatedIndexType, class ...ArgTypes>
   CreatedIndexType createIndex(BuildStateType &&state,
                                ArgTypes... args) const noexcept {
-    auto iterators = detail::createIterators<HeadEntityType>(state,
-                                                             entity_count_);
-    SuperType const* that = static_cast<SuperType const*>(this);
-    return that->createIndex<CreatedIndexType>(std::move(state),
-                                               std::forward<ArgTypes>(args)...,
-                                               std::move(iterators));
+    return SuperType::template createIndex<CreatedIndexType>(
+        std::move(state),
+        std::forward<ArgTypes>(args)...,
+        detail::createIterators<HeadEntityType>(state, entity_count_)
+        );
   }
  private:
   size_t entity_count_;
 }; // struct IndexBuilder<EntityTypes...>
 
 template <>
-struct IndexBuilder<> {
+class IndexBuilder<> {
+ public:
   template <class EntityType>
   IndexBuilder<EntityType> setEntityCount(size_t entity_count) const noexcept {
     return IndexBuilder<EntityType>(*this, entity_count);
   }
+ protected:
   template <class IndexType, class BuildStateType, class ...ArgTypes>
   IndexType createIndex(BuildStateType&&, ArgTypes... args) const noexcept {
     return IndexType(std::forward<ArgTypes>(args)...);
