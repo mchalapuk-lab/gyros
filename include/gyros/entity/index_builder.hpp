@@ -10,6 +10,7 @@
 #include "gyros/entity/detail/index_build_state.hpp"
 #include "gyros/entity/detail/iterators_creator.hpp"
 #include "gyros/entity/index.hpp"
+#include "gyros/component/rotor.hpp"
 
 namespace gyros {
 namespace tl = util::type_list;
@@ -17,7 +18,7 @@ namespace entity {
 
 template <class ...EntityTypes>
 class IndexBuilder
-  : protected TypeTraits<IndexBuilder<EntityTypes...>>::SuperType {
+  : private TypeTraits<IndexBuilder<EntityTypes...>>::SuperType {
  public:
   typedef TypeTraits<IndexBuilder<EntityTypes...>> Traits;
   typedef typename Traits::Type Type;
@@ -25,7 +26,7 @@ class IndexBuilder
   typedef typename Traits::RotorType RotorType;
   typedef typename Traits::IndexType IndexType;
   typedef typename Traits::BuildStateType BuildStateType;
-  typedef typename Traits::HeadEntityType HeadEntityType;
+  typedef typename Traits::TailEntityType TailEntityType;
   typedef typename Traits::IteratorsType IteratorType;
 
   template <class NextEntityType>
@@ -45,37 +46,56 @@ class IndexBuilder
   ExtendWith<EntityType> setEntityCount(size_t entity_count) const noexcept {
     return ExtendWith<EntityType>(*this, entity_count);
   }
+  size_t entityCount() const {
+    return entity_count_;
+  }
+
   IndexType build(RotorType &rotor) noexcept {
-    return createIndex<IndexType>(BuildStateType(rotor));
+    BuildStateType state(rotor);
+    RecursiveForward<Type, IndexBuilder<>, GetSuperType, IndexType> forward;
+    return forward(ArgumentForwarder{*this, state}, IndexCreator());
   }
 
- protected:
-  using SuperType::createIndex;
 
-  template <class CreatedIndexType, class ...ArgTypes>
-  CreatedIndexType createIndex(BuildStateType &&state,
-                               ArgTypes... args) const noexcept {
-    return SuperType::template createIndex<CreatedIndexType>(
-        std::move(state),
-        std::forward<ArgTypes>(args)...,
-        detail::createIterators<HeadEntityType>(state, entity_count_)
-        );
-  }
  private:
+  template <class Type>
+  using GetSuperType = GetAncestor<Type, 1>;
+
+  struct IndexCreator {
+    template <class ...ArgTypes>
+    IndexType operator() (ArgTypes... args) const noexcept {
+      return IndexType(std::forward<ArgTypes>(args)...);
+    }
+  }; // IndexCreator
+
+  struct ArgumentForwarder {
+    template <class CurrentType, class RecursiveType, class ...ArgTypes>
+    IndexType operator() (RecursiveType &&next,
+                          ArgumentForwarder &&forward,
+                          IndexCreator &&create,
+                          ArgTypes ...args) const noexcept {
+
+      typedef typename CurrentType::TailEntityType EntityType;
+      size_t entity_count = builder_.CurrentType::entityCount();
+
+      return next(std::move(forward),
+                  std::move(create),
+                  detail::createIterators<EntityType>(state_, entity_count),
+                  std::forward<ArgTypes>(args)...
+                  );
+    }
+    Type &builder_;
+    BuildStateType &state_;
+  }; // ArgumentForwarder
+
   size_t entity_count_;
 }; // struct IndexBuilder<EntityTypes...>
 
 template <>
-class IndexBuilder<> {
- public:
+struct IndexBuilder<> {
   template <class EntityType>
   IndexBuilder<EntityType> setEntityCount(size_t entity_count) const noexcept {
     return IndexBuilder<EntityType>(*this, entity_count);
-  }
- protected:
-  template <class IndexType, class BuildStateType, class ...ArgTypes>
-  IndexType createIndex(BuildStateType&&, ArgTypes... args) const noexcept {
-    return IndexType(std::forward<ArgTypes>(args)...);
   }
 }; // struct IndexBuilder<>
 
@@ -94,8 +114,8 @@ struct TypeTraits<entity::IndexBuilder<EntityTypes...>> {
   typedef typename tl::Cast<
       entity::detail::IndexBuildState, RotorTypeList
       >::Type BuildStateType;
-  typedef typename tl::Get<EntityTypesList, 0>::Type HeadEntityType;
-  typedef typename tl::Cast<entity::Iterators, HeadEntityType>::Type
+  typedef typename tl::Back<EntityTypesList>::Type TailEntityType;
+  typedef typename tl::Cast<entity::Iterators, TailEntityType>::Type
       IteratorsType;
 }; // TypeTraits<IndexBuilder<EntityTypes...>>
 

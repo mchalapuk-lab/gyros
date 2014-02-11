@@ -71,7 +71,7 @@ TEST_F(entity_IndexBuilder,
   auto iterators = index.iterators<TypeList<Simple>>();
   ASSERT_EQ(count, iterators.end<0>() - iterators.begin<0>());
 }
-/*
+
 TEST_F(entity_IndexBuilder,
        test_ptrdiff_after_building_index_with_two_entities) {
   MockRotor<Simple, Complex> rotor;
@@ -85,4 +85,4 @@ TEST_F(entity_IndexBuilder,
   auto iterators1 = index.iterators<TypeList<Complex>>();
   ASSERT_EQ(count, iterators1.end<0>() - iterators1.begin<0>());
 }
-*/
+
