@@ -30,6 +30,8 @@ TEST_F(component_RotorLock, test_functor_not_called_before_destruct) {
 
   RotorLock lock(wrap(functor));
   Mock::VerifyAndClearExpectations(&functor);
+
+  EXPECT_CALL(functor, call()); // just to suppress gmock warning
 }
 
 TEST_F(component_RotorLock, test_functor_not_called_on_move) {
@@ -40,6 +42,8 @@ TEST_F(component_RotorLock, test_functor_not_called_on_move) {
   RotorLock lock0(wrap(functor));
   RotorLock lock1(std::move(lock0));
   Mock::VerifyAndClearExpectations(&functor);
+
+  EXPECT_CALL(functor, call()); // just to suppress gmock warning
 }
 
 TEST_F(component_RotorLock, test_functor_not_called_on_destruct_after_move) {
@@ -51,6 +55,8 @@ TEST_F(component_RotorLock, test_functor_not_called_on_destruct_after_move) {
   RotorLock lock1(std::move(*lock0));
   lock0.reset();
   Mock::VerifyAndClearExpectations(&functor);
+
+  EXPECT_CALL(functor, call()); // just to suppress gmock warning
 }
 
 TEST_F(component_RotorLock, test_functor_called_only_once_after_2_moves) {

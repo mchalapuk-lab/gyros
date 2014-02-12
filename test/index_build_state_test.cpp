@@ -7,6 +7,7 @@
 #include "test/gyros/components.hpp"
 #include "test/static_assert.hpp"
 #include "test/gyros/component/mock_rotor.hpp"
+#include "test/gyros/component/fake_rotor.hpp"
 
 template <class Type>
 using Member = test::gyros::component::OneMemberComponent<Type>;
@@ -104,9 +105,14 @@ void test_super_type_in_traits_of_build_state_with_three_components() {
 
 template <class ...Types>
 using MockRotor = test::gyros::component::MockRotor<Types...>;
+template <class ...Types>
+using FakeRotor = test::gyros::component::FakeRotor<Types...>;
 template <class Type>
 using TypeLiteral = gyros::util::TypeLiteral<Type>;
 using namespace ::testing;
+
+// just to distinguish tested calls from suppressed gmock warning
+#define SUPPRESS_GMOCK_WARNING EXPECT_CALL
 
 struct entity_IndexBuildState : public ::testing::TestWithParam<ptrdiff_t> {
   entity_IndexBuildState()
@@ -123,12 +129,14 @@ struct entity_IndexBuildState : public ::testing::TestWithParam<ptrdiff_t> {
 };
 
 TEST_F(entity_IndexBuildState, test_creating_state_with_one_component) {
-  MockRotor<Simple> rotor;
+  FakeRotor<Simple> rotor { begin0, begin0 };
   IndexBuildState<Simple> tested_state(rotor);
 }
 
 TEST_F(entity_IndexBuildState, test_creating_state_with_three_components) {
-  MockRotor<Simple, Complex, Member<int>> rotor;
+  FakeRotor<Simple, Complex, Member<int>> rotor {
+    begin0, begin0, begin1, begin1, begin2, begin2
+  };
   IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
 }
 
@@ -149,6 +157,9 @@ TEST_F(entity_IndexBuildState,
   EXPECT_CALL(rotor, begin(A<TypeLiteral<Simple>>()))
       .WillOnce(Return(begin0));
 
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Complex>>()));
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Member<int>>>()));
+
   IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
   ASSERT_EQ(begin0, tested_state.it<Simple>());
 }
@@ -160,6 +171,9 @@ TEST_F(entity_IndexBuildState,
   EXPECT_CALL(rotor, begin(A<TypeLiteral<Complex>>()))
       .WillOnce(Return(begin1));
 
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Simple>>()));
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Member<int>>>()));
+
   IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
   ASSERT_EQ(begin1, tested_state.it<Complex>());
 }
@@ -170,6 +184,9 @@ TEST_F(entity_IndexBuildState,
   MockRotor<Simple, Complex, Member<int>> rotor;
   EXPECT_CALL(rotor, begin(A<TypeLiteral<Member<int>>>()))
       .WillOnce(Return(begin2));
+
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Simple>>()));
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Complex>>()));
 
   IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
   ASSERT_EQ(begin2, tested_state.it<Member<int>>());
@@ -196,6 +213,9 @@ TEST_F(entity_IndexBuildState,
   EXPECT_CALL(rotor, begin(A<TypeLiteral<Simple>>()))
       .WillOnce(Return(begin0));
 
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Complex>>()));
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Member<int>>>()));
+
   IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
   ASSERT_EQ(expected0, tested_state.increment<Simple>(diff));
   ASSERT_EQ(expected0, tested_state.it<Simple>());
@@ -209,6 +229,9 @@ TEST_F(entity_IndexBuildState,
   EXPECT_CALL(rotor, begin(A<TypeLiteral<Complex>>()))
       .WillOnce(Return(begin1));
 
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Simple>>()));
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Member<int>>>()));
+
   IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
   ASSERT_EQ(expected1, tested_state.increment<Complex>(diff));
   ASSERT_EQ(expected1, tested_state.it<Complex>());
@@ -221,6 +244,9 @@ TEST_F(entity_IndexBuildState,
   MockRotor<Simple, Complex, Member<int>> rotor;
   EXPECT_CALL(rotor, begin(A<TypeLiteral<Member<int>>>()))
       .WillOnce(Return(begin2));
+
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Simple>>()));
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Complex>>()));
 
   IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
   ASSERT_EQ(expected2, tested_state.increment<Member<int>>(diff));
@@ -248,6 +274,9 @@ TEST_F(entity_IndexBuildState,
   EXPECT_CALL(rotor, begin(A<TypeLiteral<Simple>>()))
       .WillOnce(Return(begin0));
 
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Complex>>()));
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Member<int>>>()));
+
   IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
   tested_state.increment<Simple>(diff);
   ASSERT_EQ(expected0, tested_state.increment<Simple>(diff));
@@ -261,6 +290,9 @@ TEST_F(entity_IndexBuildState,
   MockRotor<Simple, Complex, Member<int>> rotor;
   EXPECT_CALL(rotor, begin(A<TypeLiteral<Complex>>()))
       .WillOnce(Return(begin1));
+
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Simple>>()));
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Member<int>>>()));
 
   IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
   tested_state.increment<Complex>(diff);
@@ -276,6 +308,9 @@ TEST_F(entity_IndexBuildState,
   EXPECT_CALL(rotor, begin(A<TypeLiteral<Member<int>>>()))
       .WillOnce(Return(begin2));
 
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Simple>>()));
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Complex>>()));
+
   IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
   tested_state.increment<Member<int>>(diff);
   ASSERT_EQ(expected2, tested_state.increment<Member<int>>(diff));
@@ -288,6 +323,9 @@ TEST_F(entity_IndexBuildState,
   EXPECT_CALL(rotor, begin(A<TypeLiteral<Simple>>()))
       .WillOnce(Return(begin0));
 
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Complex>>()));
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Member<int>>>()));
+
   IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
   tested_state.increment<Complex>(diff);
   ASSERT_EQ(begin0, tested_state.it<Simple>());
@@ -298,6 +336,9 @@ TEST_F(entity_IndexBuildState,
   MockRotor<Simple, Complex, Member<int>> rotor;
   EXPECT_CALL(rotor, begin(A<TypeLiteral<Simple>>()))
       .WillOnce(Return(begin0));
+
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Complex>>()));
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Member<int>>>()));
 
   IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
   tested_state.increment<Member<int>>(diff);
@@ -310,6 +351,9 @@ TEST_F(entity_IndexBuildState,
   EXPECT_CALL(rotor, begin(A<TypeLiteral<Complex>>()))
       .WillOnce(Return(begin1));
 
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Simple>>()));
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Member<int>>>()));
+
   IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
   tested_state.increment<Simple>(diff);
   ASSERT_EQ(begin1, tested_state.it<Complex>());
@@ -320,6 +364,9 @@ TEST_F(entity_IndexBuildState,
   MockRotor<Simple, Complex, Member<int>> rotor;
   EXPECT_CALL(rotor, begin(A<TypeLiteral<Complex>>()))
       .WillOnce(Return(begin1));
+
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Simple>>()));
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Member<int>>>()));
 
   IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
   tested_state.increment<Member<int>>(diff);
@@ -332,6 +379,9 @@ TEST_F(entity_IndexBuildState,
   EXPECT_CALL(rotor, begin(A<TypeLiteral<Member<int>>>()))
       .WillOnce(Return(begin2));
 
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Simple>>()));
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Complex>>()));
+
   IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
   tested_state.increment<Simple>(diff);
   ASSERT_EQ(begin2, tested_state.it<Member<int>>());
@@ -342,6 +392,9 @@ TEST_F(entity_IndexBuildState,
   MockRotor<Simple, Complex, Member<int>> rotor;
   EXPECT_CALL(rotor, begin(A<TypeLiteral<Member<int>>>()))
       .WillOnce(Return(begin2));
+
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Simple>>()));
+  SUPPRESS_GMOCK_WARNING(rotor, begin(A<TypeLiteral<Complex>>()));
 
   IndexBuildState<Simple, Complex, Member<int>> tested_state(rotor);
   tested_state.increment<Complex>(diff);
