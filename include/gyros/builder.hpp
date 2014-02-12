@@ -54,13 +54,12 @@ class Builder<HeadEntityType, TailEntityTypes...>
   template <class IndexBuilderType>
   entity::IndexBuilder<HeadEntityType, TailEntityTypes...>
   addFactoriesTo(RotorBuilderType &rotor_builder,
-                 IndexBuilderType index_builder) const {
+                 IndexBuilderType &&index_builder) const {
     auto begin = entity_builders_.begin(), end = entity_builders_.end();
     for (auto it = begin; it != end; ++it) {
       it->addFactoriesTo(rotor_builder);
     }
-    SuperType const* that = static_cast<SuperType const*>(this);
-    return that->addFactoriesTo(
+    return SuperType::addFactoriesTo(
         rotor_builder,
         index_builder.template setEntityCount<HeadEntityType>(end - begin)
         );
@@ -73,7 +72,7 @@ template <>
 struct Builder<> {
   template <class RotorBuilderType, class IndexBuilderType>
   IndexBuilderType const& addFactoriesTo(RotorBuilderType,
-                                   IndexBuilderType const& builder) const {
+                                         IndexBuilderType && builder) const {
     return builder;
   }
 }; // Builder<>
