@@ -9,7 +9,7 @@ if (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
 endif ()
 
 set (CMAKE_CXX_FLAGS -std=c++0x)
-set (CMAKE_CXX_FLAGS_DEBUG " -g3 -O0 -DDEBUG")
+set (CMAKE_CXX_FLAGS_DEBUG " -g3 -O0 -DDEBUG -fno-pretty-templates")
 set (CMAKE_CXX_FLAGS_RELEASE " -O3 -DNDEBUG")
 
 add_subdirectory (test)
