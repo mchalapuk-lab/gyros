@@ -49,6 +49,21 @@ void testGettingEightTest() {
   AssertIsSame<typename Get<List, 7>::Type, Simple>();
 }
 
+// front
+
+static_assert(
+    std::is_same<typename Front<TypeList<Simple>>::Type, Simple>::value,
+    "test getting front type of singleton list"
+    );
+static_assert(
+    std::is_same<typename Front<TypeList<Mock, Simple>>::Type, Mock>::value,
+    "test getting front type of 2-element list"
+    );
+void testGettingFrontTypeOfEightElementList() {
+  typedef TypeList<Simple, Mock, Mock, Mock, Mock, Mock, Mock, Mock> List;
+  AssertIsSame<typename Front<List>::Type, Simple>();
+}
+
 // back
 
 static_assert(
@@ -77,7 +92,7 @@ static void testPushingBackToNotEmptyList() {
 
 // pop back
 
-static void testPoppingBackSimngletonList() {
+static void testPoppingBackSingletonList() {
   typedef typename PopBack<TypeList<Simple>>::Type AfterPop;
   AssertIsSame<AfterPop, TypeList<>>();
 }
@@ -88,13 +103,41 @@ static void testPoppingBack2ElementList() {
 
 // pop front
 
-static void testPoppingFrontSimngletonList() {
+static void testPoppingFrontSingletonList() {
   typedef typename PopFront<TypeList<Simple>>::Type AfterPop;
   AssertIsSame<AfterPop, TypeList<>>();
 }
 static void testPoppingFront2ElementList() {
   typedef typename PopFront<TypeList<Simple, Mock>>::Type AfterPop;
   AssertIsSame<AfterPop, TypeList<Mock>>();
+}
+
+// remove
+
+static void testRemovingTypeFromSingletonList() {
+  typedef typename Remove<TypeList<Simple>, Simple>::Type AfterRemove;
+  AssertIsSame<AfterRemove, TypeList<>>();
+}
+static void testRemovingFrontTypeFrom2ElementList() {
+  typedef typename Remove<TypeList<Simple, Mock>, Simple>::Type AfterRemove;
+  AssertIsSame<AfterRemove, TypeList<Mock>>();
+}
+static void testRemovingBackTypeFrom2ElementList() {
+  typedef typename Remove<TypeList<Simple, Mock>, Mock>::Type AfterRemove;
+  AssertIsSame<AfterRemove, TypeList<Simple>>();
+}
+static void testRemovingMiddleTypeFrom3ElementList() {
+  typedef typename Remove<TypeList<Simple, Mock, Simple>, Mock>::Type
+      AfterRemove;
+  AssertIsSame<AfterRemove, TypeList<Simple, Simple>>();
+}
+static void testRemovingTypeFromEmptyList() {
+  typedef typename Remove<TypeList<>, Mock>::Type AfterRemove;
+  AssertIsSame<AfterRemove, TypeList<>>();
+}
+static void testRemovingTypeNotContainedInTheList() {
+  typedef typename Remove<TypeList<Simple>, Mock>::Type AfterRemove;
+  AssertIsSame<AfterRemove, TypeList<Simple>>();
 }
 
 // index of

@@ -15,6 +15,7 @@
 #include "gyros/util/type_list/cat.hpp"
 #include "gyros/util/type_list/index_of.hpp"
 #include "gyros/util/type_list/contains.hpp"
+#include "gyros/util/type_list/remove.hpp"
 #include "gyros/util/type_list/permute.hpp"
 #include "gyros/util/type_list/cast.hpp"
 
