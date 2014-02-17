@@ -12,7 +12,8 @@ namespace util {
 namespace type_list {
 
 template <class TypeListType>
-struct PopFront;
+struct PopFront {
+}; // struct PopFront<TypeListType>
 
 template <class HeadType, class ...TailTypes>
 struct PopFront<TypeList<HeadType, TailTypes...>> {
