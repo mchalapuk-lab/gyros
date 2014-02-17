@@ -169,6 +169,9 @@ class RotorBase<T, L...> : public RotorBase<L...> {
     capacity_(pool_capacity) {
   }
 
+  using RotorBase<L...>::capacityHack;
+  using RotorBase<L...>::poolHack;
+
   size_t capacityHack(util::TypeLiteral<T>) const noexcept {
     return capacity_;
   }
@@ -180,6 +183,16 @@ class RotorBase<T, L...> : public RotorBase<L...> {
   T *const pool_;
   size_t capacity_;
 }; // class RotorBase<T, L...>
+
+template <>
+struct RotorBase<> {
+  struct Unused {
+  };
+  size_t capacityHack(util::TypeLiteral<Unused>) const noexcept {
+  }
+  Unused *const poolHack(util::TypeLiteral<Unused>) const noexcept {
+  }
+}; // struct RotorBase<>
 
 } // namespace component
 } // namespace gyros

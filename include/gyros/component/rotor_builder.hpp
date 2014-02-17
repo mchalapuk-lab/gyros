@@ -20,7 +20,7 @@ struct RotorBuilder {
 }; // struct Builder
 
 template <class T, class ...L>
-class RotorBuilder<T, L...> : private RotorBuilder<L...> {
+class RotorBuilder<T, L...> : public RotorBuilder<L...> {
  public:
   typedef Rotor<T, L...> RotorType;
 
@@ -38,9 +38,8 @@ class RotorBuilder<T, L...> : private RotorBuilder<L...> {
   RotorBuilder<T, L...>& addFactory(FactoryType factory) {
     typedef typename detail::FindSubtype<RotorBuilder,
                                          EmplacedComponentType,
-                                         T, L...>::type BuilderType;
-    BuilderType *that = static_cast<BuilderType *>(this);
-    that->factories_.push_back(std::forward<FactoryType>(factory));
+                                         T, L...>::type AncestorType;
+    AncestorType::factories_.push_back(std::forward<FactoryType>(factory));
     return *this;
   }
 
@@ -48,7 +47,7 @@ class RotorBuilder<T, L...> : private RotorBuilder<L...> {
     detail::RotorCreator<RotorType, T, L...> create;
     return create(*this);
   }
- private:
+ protected:
   std::vector<std::function<T *(void *)>> factories_;
 
   template <class RotorType, class ...ComponentTypes>
