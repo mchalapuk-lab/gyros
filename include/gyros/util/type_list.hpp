@@ -7,6 +7,7 @@
 #include "gyros/util/type_list/type_list.hpp"
 #include "gyros/util/type_list/size.hpp"
 #include "gyros/util/type_list/get.hpp"
+#include "gyros/util/type_list/front.hpp"
 #include "gyros/util/type_list/back.hpp"
 #include "gyros/util/type_list/push_back.hpp"
 #include "gyros/util/type_list/pop_back.hpp"
