@@ -27,45 +27,63 @@ struct GetAncestor<CurrentType, 0> {
   typedef CurrentType Type;
 }; // GetAncestor<IteratorsType, 0>
 
+template <class FunctionType>
+struct FuncPointerReturn {
+}; // struct FuncPointerReturn
+
+template <class ReturnType, class ...ArgTypes>
+struct FuncPointerReturn<ReturnType (*)(ArgTypes...)> {
+  typedef ReturnType Type;
+}; // struct FuncPointerReturn<ReturnType (*)(ArgTypes...)>
+
 template <
     class CurrentType,
     class StopType,
     template <class> class TypeTransformer,
-    class ReturnType = void
+    class WorkerType,
+    class FinisherType,
+    class ReturnType = typename FuncPointerReturn<
+                       decltype(&FinisherType::operator())>::Type
     >
 struct RecursiveForward {
-  template <
-      class Forwarder,
-      class Finisher,
-      class ...ArgTypes
-      >
-  ReturnType operator() (Forwarder fwd, Finisher fin, ArgTypes ...args) const {
-    typedef typename TypeTransformer<CurrentType>::Type NextType;
+  typedef RecursiveForward<
+      typename TypeTransformer<CurrentType>::Type,
+      StopType,
+      TypeTransformer,
+      WorkerType,
+      FinisherType,
+      ReturnType> NextForwardType;
 
-    return fwd.template operator()<CurrentType>(
-        RecursiveForward<NextType, StopType, TypeTransformer, ReturnType>(),
-        std::forward<Forwarder>(fwd),
-        std::forward<Finisher>(fin),
+  template <class ...ArgTypes>
+  ReturnType operator() (ArgTypes ...args) const {
+    return work_.template operator()<CurrentType>(
+        NextForwardType { work_, finish_ },
         std::forward<ArgTypes>(args)...
         );
   }
-}; // struct RecursiveForward<CurrentType, StopType, Transformer, ReturnType>
+
+  WorkerType &work_;
+  FinisherType &finish_;
+}; // struct RecursiveForward
 
 template <
     class StopType,
     template <class> class TypeTransformer,
+    class WorkerType,
+    class FinisherType,
     class ReturnType
     >
-struct RecursiveForward<StopType, StopType, TypeTransformer, ReturnType> {
-  template <
-      class Forwarder,
-      class Finisher,
-      class ...ArgTypes
-      >
-  ReturnType operator() (Forwarder, Finisher fin, ArgTypes ...args) const {
-    return fin(std::forward<ArgTypes>(args)...);
+struct RecursiveForward<
+    StopType, StopType, TypeTransformer, WorkerType, FinisherType, ReturnType
+    > {
+  template <class ...ArgTypes>
+  ReturnType operator() (ArgTypes ...args) const {
+    return finish_(std::forward<ArgTypes>(args)...);
   }
-}; // struct RecursiveForward<StopType, StopType, Transformer, ReturnType>
+
+  WorkerType &work_;
+  FinisherType &finish_;
+}; // struct RecursiveForward<StopType, StopType, ...>
 
 } // namespace gyros
 

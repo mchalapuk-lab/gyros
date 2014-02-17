@@ -52,41 +52,48 @@ class IndexBuilder
 
   IndexType build(RotorType &rotor) noexcept {
     BuildStateType state(rotor);
-    RecursiveForward<Type, IndexBuilder<>, GetSuperType, IndexType> forward;
-    return forward(ArgumentForwarder{*this, state}, IndexCreator());
+    RecursiveForwardType build0 {
+      IteratorsCreator { *this, state },
+      BuildFinisher()
+    };
+    return build0();
   }
-
 
  private:
   template <class Type>
   using GetSuperType = GetAncestor<Type, 1>;
 
-  struct IndexCreator {
+  struct BuildFinisher {
     template <class ...ArgTypes>
     IndexType operator() (ArgTypes... args) const noexcept {
       return IndexType(std::forward<ArgTypes>(args)...);
     }
-  }; // IndexCreator
+  }; // BuildFinisher
 
-  struct ArgumentForwarder {
-    template <class CurrentType, class RecursiveType, class ...ArgTypes>
-    IndexType operator() (RecursiveType &&next,
-                          ArgumentForwarder &&forward,
-                          IndexCreator &&create,
+  struct IteratorsCreator {
+    template <class CurrentType, class ForwarderType, class ...ArgTypes>
+    IndexType operator() (ForwarderType &&forward,
                           ArgTypes ...args) const noexcept {
 
       typedef typename CurrentType::TailEntityType EntityType;
       size_t entity_count = builder_.CurrentType::entityCount();
 
-      return next(std::move(forward),
-                  std::move(create),
-                  detail::createIterators<EntityType>(state_, entity_count),
-                  std::forward<ArgTypes>(args)...
-                  );
+      return forward(
+          detail::createIterators<EntityType>(state_, entity_count),
+          std::forward<ArgTypes>(args)...
+          );
     }
     Type &builder_;
     BuildStateType &state_;
-  }; // ArgumentForwarder
+  }; // IteratorsCreator
+
+  typedef RecursiveForward<
+      Type,
+      IndexBuilder<>,
+      GetSuperType,
+      IteratorsCreator const,
+      BuildFinisher const,
+      IndexType> RecursiveForwardType;
 
   size_t entity_count_;
 }; // struct IndexBuilder<EntityTypes...>
