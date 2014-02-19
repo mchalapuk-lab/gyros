@@ -14,70 +14,84 @@ namespace tl = util::type_list;
 namespace entity {
 namespace detail {
 
-template <class EntityType, class IteratorsType>
-class IteratorsCreator
-  : private TypeTraits<IteratorsCreator<EntityType, IteratorsType>>::SuperType {
- public:
-  typedef TypeTraits<IteratorsCreator<EntityType, IteratorsType>> Traits;
-  typedef typename Traits::SuperType SuperType;
-  typedef typename Traits::HeadComponentType HeadComponentType;
-
-  template <class BuildStateType, class ...ArgTypes>
-  IteratorsType operator() (BuildStateType &state,
-                            size_t entity_count,
-                            ArgTypes... args) const noexcept {
-    auto begin = state.template it<HeadComponentType>();
-    auto end = state.template increment<HeadComponentType>(entity_count);
-
-    SuperType const* that = static_cast<SuperType const*>(this);
-    return that->operator()
-        (state, std::forward<ArgTypes>(args)..., entity_count, begin, end);
-  }
-}; // IteratorsCreator<EntityType, IteratorsType>
-
-template <class IteratorsType>
-struct IteratorsCreator<tl::TypeList<>, IteratorsType> {
-  template <class BuildStateType, class ...ArgTypes>
-  IteratorsType operator() (BuildStateType &,
-                            size_t,
-                            ArgTypes... args) const noexcept {
-    return IteratorsType(std::forward<ArgTypes>(args)...);
-  }
-}; // struct IteratorsCreator<TypeList<>, IteratorsType>
-
 template <class EntityType>
 struct MakeIterators {
   typedef typename tl::Cast<Iterators, EntityType>::Type Type;
 }; // struct MakeIterators<EntityType>
 
 template <class EntityType, class BuildStateType>
+class IteratorsCreator
+  : public TypeTraits<IteratorsCreator<EntityType,BuildStateType>>::SuperType {
+ public:
+  typedef TypeTraits<IteratorsCreator<EntityType, BuildStateType>> Traits;
+  typedef typename Traits::SuperType SuperType;
+  typedef typename Traits::HeadComponentType HeadComponentType;
+  typedef typename MakeIterators<EntityType>::Type IteratorsType;
+
+  constexpr IteratorsCreator(BuildStateType &state, size_t entity_count)
+      : SuperType(state, entity_count) {
+  }
+  template <class ...ArgTypes>
+  IteratorsType operator() (ArgTypes... args) const noexcept {
+    return forward<IteratorsType>(std::forward<ArgTypes>(args)...);
+  }
+
+ protected:
+  template <class CreatedIteratorsType, class ...ArgTypes>
+  CreatedIteratorsType forward(ArgTypes... args) const noexcept {
+    auto begin = this->state_.template it<HeadComponentType>();
+    auto end = this->state_
+        .template increment<HeadComponentType>(this->entity_count_);
+
+    return SuperType::template forward<CreatedIteratorsType>(
+        std::forward<ArgTypes>(args)..., begin, end
+        );
+  }
+}; // class IteratorsCreator<EntityType, BuildStateType>
+
+template <class BuildStateType>
+class IteratorsCreator<tl::TypeList<>, BuildStateType> {
+ public:
+  constexpr IteratorsCreator(BuildStateType &state, size_t entity_count)
+      : state_(state), entity_count_(entity_count) {
+  }
+ protected:
+  template <class IteratorsType, class ...ArgTypes>
+  IteratorsType forward(ArgTypes... args) const noexcept {
+    return IteratorsType(std::forward<ArgTypes>(args)...);
+  }
+  BuildStateType &state_;
+  size_t entity_count_;
+}; // class IteratorsCreator<TypeList<>, BuildStateType>
+
+template <class EntityType, class BuildStateType>
 typename MakeIterators<EntityType>::Type createIterators(BuildStateType &state,
                                                          size_t entity_count) {
-  IteratorsCreator<EntityType, typename MakeIterators<EntityType>::Type> create;
-  return create(state, entity_count);
+  IteratorsCreator<EntityType, BuildStateType> create(state, entity_count);
+  return create();
 }
 
 } // namespace detail
 } // namespace entity
 
-template <class ...ComponentTypes, class IteratorsType>
+template <class ...ComponentTypes, class BuildStateType>
 struct TypeTraits<
     entity::detail::IteratorsCreator<
         tl::TypeList<ComponentTypes...>,
-        IteratorsType
+        BuildStateType
         >
     > {
   typedef tl::TypeList<ComponentTypes...> EntityType;
   typedef typename tl::PopBack<EntityType>::Type SuperEntityType;
   typedef typename tl::Get<EntityType, 0>::Type HeadComponentType;
-  typedef entity::detail::IteratorsCreator<EntityType, IteratorsType> Type;
-  typedef entity::detail::IteratorsCreator<SuperEntityType, IteratorsType>
+  typedef entity::detail::IteratorsCreator<EntityType, BuildStateType> Type;
+  typedef entity::detail::IteratorsCreator<SuperEntityType, BuildStateType>
       SuperType;
 }; // TypeTraits<IteratorsCreator<TypeList<ComponentTypes...>, IteratorsType>>
 
-template <class IteratorsType>
+template <class BuildStateType>
 struct TypeTraits<
-  entity::detail::IteratorsCreator<tl::TypeList<>, IteratorsType>
+  entity::detail::IteratorsCreator<tl::TypeList<>, BuildStateType>
   > {
 }; // TypeTraits<IteratorsCreator<TypeList<>, IteratorsType>>
 

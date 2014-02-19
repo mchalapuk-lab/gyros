@@ -18,7 +18,7 @@ namespace entity {
 
 template <class ...EntityTypes>
 class IndexBuilder
-  : private TypeTraits<IndexBuilder<EntityTypes...>>::SuperType {
+  : public TypeTraits<IndexBuilder<EntityTypes...>>::SuperType {
  public:
   typedef TypeTraits<IndexBuilder<EntityTypes...>> Traits;
   typedef typename Traits::Type Type;

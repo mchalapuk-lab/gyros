@@ -22,7 +22,7 @@ struct MakeIterators {
 
 template <class HeadEntityType, class ...TailEntityTypes>
 class Index<HeadEntityType, TailEntityTypes...>
-  : private Index<TailEntityTypes...> {
+  : protected Index<TailEntityTypes...> {
  public:
   typedef typename MakeIterators<HeadEntityType>::Type IteratorsType;
   typedef tl::TypeList<HeadEntityType, TailEntityTypes...> EntityTypeList;

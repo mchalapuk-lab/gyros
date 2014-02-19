@@ -6,13 +6,14 @@
 #include "test/gyros/components.hpp"
 #include "test/gyros/component/fake_rotor.hpp"
 
-template <class ...Types>
-using TypeList = gyros::util::type_list::TypeList<Types...>;
 using Simple = test::gyros::component::EmptyComponent;
-using Complex = test::gyros::component::OneMemberComponent<int>;
+using Complex = test::gyros::component::MockComponent;
+using Member = test::gyros::component::OneMemberComponent<int>;
 
 using namespace ::testing;
 
+template <class ...Types>
+using TypeList = gyros::util::type_list::TypeList<Types...>;
 template <class ...Types>
 using FakeRotor = test::gyros::component::FakeRotor<Types...>;
 template <class ...Types>
@@ -26,6 +27,7 @@ namespace gyros {
 // instead of component::PositionIterator
 template<> struct TypeTraits<Simple> { typedef Simple* IteratorType; };
 template<> struct TypeTraits<Complex> { typedef Complex* IteratorType; };
+template<> struct TypeTraits<Member> { typedef Member* IteratorType; };
 namespace detail {
 // rotor types must be FakeRotor
 template <>
@@ -37,9 +39,9 @@ struct MakeRotor<TypeList<Simple>, TypeList<Complex>> {
   typedef FakeRotor<Simple, Complex> Type;
 }; // class MakeRotor<TypeList<Simple>, TypeList<Complex>>
 template <>
-struct MakeRotor<TypeList<Simple>, TypeList<Simple, Complex>> {
-  typedef FakeRotor<Simple, Complex> Type;
-}; // class MakeRotor<TypeList<Simple>, TypeList<Simple, Complex>>
+struct MakeRotor<TypeList<Simple>, TypeList<Complex>, TypeList<Member>> {
+  typedef FakeRotor<Simple, Complex, Member> Type;
+}; // class MakeRotor<TypeList<Simple>, TypeList<Complex>, TypeList<Member>>
 } // namespace detail
 } // namespace gyros
 
@@ -93,9 +95,32 @@ TEST_F(entity_IndexBuilder,
       .setEntityCount<TypeList<Simple>>(count)
       .setEntityCount<TypeList<Complex>>(count)
       .build(rotor);
+
   auto iterators0 = index.iterators<TypeList<Simple>>();
   ASSERT_EQ(count, iterators0.end<0>() - iterators0.begin<0>());
   auto iterators1 = index.iterators<TypeList<Complex>>();
   ASSERT_EQ(count, iterators1.end<0>() - iterators1.begin<0>());
+}
+
+TEST_F(entity_IndexBuilder,
+       test_ptrdiff_after_building_index_with_three_entities) {
+  FakeRotor<Simple, Complex, Member> rotor {
+    iterator<Simple>(), iterator<Simple>() + count,
+    iterator<Complex>(), iterator<Complex>() + count,
+    iterator<Member>(), iterator<Member>() + count,
+  };
+
+  auto index = IndexBuilder<>()
+      .setEntityCount<TypeList<Simple>>(count)
+      .setEntityCount<TypeList<Complex>>(count)
+      .setEntityCount<TypeList<Member>>(count)
+      .build(rotor);
+
+  auto iterators0 = index.iterators<TypeList<Simple>>();
+  ASSERT_EQ(count, iterators0.end<0>() - iterators0.begin<0>());
+  auto iterators1 = index.iterators<TypeList<Complex>>();
+  ASSERT_EQ(count, iterators1.end<0>() - iterators1.begin<0>());
+  auto iterators2 = index.iterators<TypeList<Member>>();
+  ASSERT_EQ(count, iterators2.end<0>() - iterators2.begin<0>());
 }
 
