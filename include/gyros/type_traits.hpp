@@ -78,7 +78,10 @@ struct RecursiveForward<
     > {
   template <class ...ArgTypes>
   ReturnType operator() (ArgTypes ...args) const {
-    return finish_(std::forward<ArgTypes>(args)...);
+    return work_.template operator()<StopType>(
+        finish_, // finisher will be called as last forward object
+        std::forward<ArgTypes>(args)...
+        );
   }
 
   WorkerType &work_;

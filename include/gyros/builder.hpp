@@ -27,15 +27,16 @@ class Builder : private TypeTraits<Builder<EntityTypes...>>::SuperType {
   typedef typename Traits::SuperType SuperType;
   typedef typename Traits::HeadType HeadEntityType;
   typedef typename Traits::SceneType SceneType;
-  typedef typename Traits::EmptyEntityBuilderType EmptyEntityBuilderType;
   typedef typename Traits::EntityBuilderType EntityBuilderType;
   typedef typename Traits::IteratorType IteratorType;
   typedef typename Traits::RotorBuilderType RotorBuilderType;
   typedef typename Traits::IndexBuilderType FinalIndexBuilderType;
 
-  EmptyEntityBuilderType newEntity() {
-    return EmptyEntityBuilderType(*this);
+  using SuperType::addEntity;
+  Builder& addEntity(EntityBuilderType &&entity_builder) {
+    entity_builders_.emplace_back(std::move(entity_builder));
   }
+
   SceneType build() {
     RotorBuilderType rotor_builder;
 
@@ -48,11 +49,6 @@ class Builder : private TypeTraits<Builder<EntityTypes...>>::SuperType {
     auto rotor = rotor_builder.build();
     auto index = index_builder.build(rotor);
     return SceneType(std::move(rotor), std::move(index));
-  }
-
-  using SuperType::addEntity;
-  Builder& addEntity(EntityBuilderType &&entity_builder) {
-    entity_builders_.emplace_back(std::move(entity_builder));
   }
 
   IteratorType begin() const {
@@ -98,7 +94,7 @@ class Builder : private TypeTraits<Builder<EntityTypes...>>::SuperType {
 
   typedef RecursiveForward<
       Type,
-      Builder<>,
+      Builder<typename tl::Back<tl::TypeList<EntityTypes...>>::Type>,
       GetSuperType,
       FactoriesAdder const,
       BuildFinisher const,
@@ -121,9 +117,8 @@ struct TypeTraits<Builder<EntityTypes...>> {
   typedef typename tl::PopFront<TypeList>::Type SuperTypeList;
   typedef typename tl::Cast<Builder, SuperTypeList>::Type SuperType;
   typedef Scene<EntityTypes...> SceneType;
-  typedef entity::Builder<Type, tl::TypeList<>> EmptyEntityBuilderType;
   typedef typename tl::Front<TypeList>::Type HeadType;
-  typedef typename entity::Builder<Type, HeadType>::BaseType EntityBuilderType;
+  typedef typename tl::Cast<entity::Builder, HeadType>::Type EntityBuilderType;
   typedef typename std::vector<EntityBuilderType>::const_iterator IteratorType;
   typedef typename SceneType::RotorType RotorType;
   typedef typename RotorType::BuilderType RotorBuilderType;

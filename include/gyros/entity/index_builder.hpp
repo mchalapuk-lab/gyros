@@ -89,7 +89,7 @@ class IndexBuilder
 
   typedef RecursiveForward<
       Type,
-      IndexBuilder<>,
+      IndexBuilder<typename tl::Front<tl::TypeList<EntityTypes...>>::Type>,
       GetSuperType,
       IteratorsCreator const,
       BuildFinisher const,

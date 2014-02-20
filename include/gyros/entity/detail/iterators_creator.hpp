@@ -20,49 +20,55 @@ struct MakeIterators {
 }; // struct MakeIterators<EntityType>
 
 template <class EntityType, class BuildStateType>
-class IteratorsCreator
-  : public TypeTraits<IteratorsCreator<EntityType,BuildStateType>>::SuperType {
+class IteratorsCreator {
  public:
-  typedef TypeTraits<IteratorsCreator<EntityType, BuildStateType>> Traits;
-  typedef typename Traits::SuperType SuperType;
-  typedef typename Traits::HeadComponentType HeadComponentType;
   typedef typename MakeIterators<EntityType>::Type IteratorsType;
 
   constexpr IteratorsCreator(BuildStateType &state, size_t entity_count)
-      : SuperType(state, entity_count) {
+      : incrementer_{ state, entity_count } {
   }
-  template <class ...ArgTypes>
-  IteratorsType operator() (ArgTypes... args) const noexcept {
-    return forward<IteratorsType>(std::forward<ArgTypes>(args)...);
+  IteratorsType operator() () const noexcept {
+    RecursiveForwardType build0 { incrementer_, Finisher() };
+    return build0();
   }
 
- protected:
-  template <class CreatedIteratorsType, class ...ArgTypes>
-  CreatedIteratorsType forward(ArgTypes... args) const noexcept {
-    auto begin = this->state_.template it<HeadComponentType>();
-    auto end = this->state_
-        .template increment<HeadComponentType>(this->entity_count_);
+ private:
+  template <class CurrentType>
+  struct Next {
+    static constexpr size_t next_index
+        = tl::IndexOf<EntityType, CurrentType>::value + 1;
+    typedef typename tl::Get<EntityType, next_index>::Type Type;
+  }; // struct Next
 
-    return SuperType::template forward<CreatedIteratorsType>(
-        std::forward<ArgTypes>(args)..., begin, end
-        );
-  }
+  struct Finisher {
+    template <class ...ArgTypes>
+    IteratorsType operator() (ArgTypes... args) const noexcept {
+      return IteratorsType(std::forward<ArgTypes>(args)...);
+    }
+  }; // class Finisher
+
+  struct IteratorsIncrementer {
+    template <class CurrentType, class ForwarderType, class ...ArgTypes>
+    IteratorsType operator() (ForwarderType &&forward,
+                              ArgTypes... args) const noexcept {
+      auto begin = state_.template it<CurrentType>();
+      auto end = state_.template increment<CurrentType>(entity_count_);
+
+      return forward(std::forward<ArgTypes>(args)..., begin, end);
+    }
+    BuildStateType &state_;
+    size_t entity_count_;
+  }; // struct IteratorsIncrementer
+
+  typedef RecursiveForward<typename tl::Front<EntityType>::Type,
+                           typename tl::Back<EntityType>::Type,
+                           Next,
+                           IteratorsIncrementer const,
+                           Finisher const,
+                           IteratorsType> RecursiveForwardType;
+ 
+  IteratorsIncrementer incrementer_;
 }; // class IteratorsCreator<EntityType, BuildStateType>
-
-template <class BuildStateType>
-class IteratorsCreator<tl::TypeList<>, BuildStateType> {
- public:
-  constexpr IteratorsCreator(BuildStateType &state, size_t entity_count)
-      : state_(state), entity_count_(entity_count) {
-  }
- protected:
-  template <class IteratorsType, class ...ArgTypes>
-  IteratorsType forward(ArgTypes... args) const noexcept {
-    return IteratorsType(std::forward<ArgTypes>(args)...);
-  }
-  BuildStateType &state_;
-  size_t entity_count_;
-}; // class IteratorsCreator<TypeList<>, BuildStateType>
 
 template <class EntityType, class BuildStateType>
 typename MakeIterators<EntityType>::Type createIterators(BuildStateType &state,
@@ -73,27 +79,6 @@ typename MakeIterators<EntityType>::Type createIterators(BuildStateType &state,
 
 } // namespace detail
 } // namespace entity
-
-template <class ...ComponentTypes, class BuildStateType>
-struct TypeTraits<
-    entity::detail::IteratorsCreator<
-        tl::TypeList<ComponentTypes...>,
-        BuildStateType
-        >
-    > {
-  typedef tl::TypeList<ComponentTypes...> EntityType;
-  typedef typename tl::PopBack<EntityType>::Type SuperEntityType;
-  typedef typename tl::Get<EntityType, 0>::Type HeadComponentType;
-  typedef entity::detail::IteratorsCreator<EntityType, BuildStateType> Type;
-  typedef entity::detail::IteratorsCreator<SuperEntityType, BuildStateType>
-      SuperType;
-}; // TypeTraits<IteratorsCreator<TypeList<ComponentTypes...>, IteratorsType>>
-
-template <class BuildStateType>
-struct TypeTraits<
-  entity::detail::IteratorsCreator<tl::TypeList<>, BuildStateType>
-  > {
-}; // TypeTraits<IteratorsCreator<TypeList<>, IteratorsType>>
 
 } // namespace gyros
 
