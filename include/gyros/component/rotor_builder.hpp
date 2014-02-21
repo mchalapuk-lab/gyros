@@ -7,7 +7,7 @@
 #include <vector>
 #include <functional>
 
-#include "gyros/component/detail/find_subtype.hpp"
+#include "gyros/util/type_literal.hpp"
 #include "gyros/component/detail/rotor_creator.hpp"
 #include "gyros/fwd/component/rotor.hpp"
 #include "gyros/fwd/component/rotor_builder.hpp"
@@ -20,8 +20,10 @@ struct RotorBuilder {
 }; // struct Builder
 
 template <class T, class ...L>
-class RotorBuilder<T, L...> : public RotorBuilder<L...> {
+class RotorBuilder<T, L...> : protected RotorBuilder<L...> {
  public:
+  typedef RotorBuilder<T, L...> Type;
+  typedef RotorBuilder<L...> SuperType;
   typedef Rotor<T, L...> RotorType;
 
   template <class EmplacedComponentType, class ...ArgTypes>
@@ -33,13 +35,10 @@ class RotorBuilder<T, L...> : public RotorBuilder<L...> {
         );
     return addFactory<EmplacedComponentType>(std::move(factory));
   }
-
   template <class EmplacedComponentType, class FactoryType>
   RotorBuilder<T, L...>& addFactory(FactoryType factory) {
-    typedef typename detail::FindSubtype<RotorBuilder,
-                                         EmplacedComponentType,
-                                         T, L...>::type AncestorType;
-    AncestorType::factories_.push_back(std::forward<FactoryType>(factory));
+    addFactory0(std::forward<FactoryType>(factory),
+                util::TypeLiteral<EmplacedComponentType>());
     return *this;
   }
 
@@ -50,9 +49,21 @@ class RotorBuilder<T, L...> : public RotorBuilder<L...> {
  protected:
   std::vector<std::function<T *(void *)>> factories_;
 
+  using SuperType::addFactory0;
+  template <class FactoryType>
+  void addFactory0(FactoryType factory, util::TypeLiteral<T>) {
+    factories_.push_back(std::forward<FactoryType>(factory));
+  }
+
   template <class RotorType, class ...ComponentTypes>
   friend class detail::RotorCreator;
 }; // class RotorBuilder<T, L...>
+
+template <>
+struct RotorBuilder<> {
+  void addFactory0() {
+  }
+}; // struct RotorBuilder<>
 
 } // namespace component
 } // namespace gyros
