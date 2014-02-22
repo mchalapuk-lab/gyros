@@ -10,7 +10,7 @@
 #include "gyros/util/type_list/pop_back.hpp"
 
 #include "gyros/entity/detail/builder_base.hpp"
-#include "gyros/component/detail/rotor_creator.hpp"
+#include "gyros/component/rotor_builder.hpp"
 
 #include <functional>
 
@@ -36,7 +36,7 @@ class Builder : private detail::BuilderBase<tl::TypeList<ComponentTypes...>> {
   template <class ComponentType, class ...ArgTypes>
   Builder<ComponentTypes..., ComponentType> emplace(ArgTypes&&... args) {
     auto factory = std::bind(
-        &component::detail::emplace<ComponentType, ArgTypes...>,
+        &component::allocateComponent<ComponentType, ArgTypes...>,
         std::placeholders::_1,
         std::forward<ArgTypes>(args)...
         );
@@ -54,7 +54,7 @@ class Builder<> : private detail::BuilderBase<tl::TypeList<>> {
   template <class ComponentType, class ...ArgTypes>
   Builder<ComponentType> emplace(ArgTypes&&... args) {
     auto factory = std::bind(
-        &component::detail::emplace<ComponentType, ArgTypes...>,
+        &component::allocateComponent<ComponentType, ArgTypes...>,
         std::placeholders::_1,
         std::forward<ArgTypes>(args)...
         );

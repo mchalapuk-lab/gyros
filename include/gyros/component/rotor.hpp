@@ -123,7 +123,7 @@ struct Rotor<T, L...> : private RotorBase<T, L...> {
     RotorType const& rotor_;
   } get_position_; // struct PositionResolver
 
-  RotorMutex<detail::N_COPIES> mutex_;
+  RotorMutex<3> mutex_;
 
   template <class ...ArgTypes>
   Rotor(ArgTypes ...pool_info) noexcept
@@ -133,10 +133,10 @@ struct Rotor<T, L...> : private RotorBase<T, L...> {
     get_position_{ *this } {
   }
 
-  friend class detail::RotorCreator<Rotor<T, L...>>;
   friend struct PoolGetter;
   friend struct CapacityGetter;
   friend struct PositionResolver;
+  friend struct RotorBuilder<T, L...>;
 }; // struct Rotor<T, L...>
 
 template <class T, class ...L>
@@ -156,14 +156,14 @@ class RotorBase<T, L...> : public RotorBase<L...> {
     for (auto it = pool_, end = it + capacity_; it != end; ++it) {
       it->~T();
     }
-    delete [] reinterpret_cast<detail::RawMemory<T> *>(pool_);
+    delete [] reinterpret_cast<RawMemory<T> *>(pool_);
   }
 
  protected:
   template <class ...ArgTypes>
-  RotorBase(detail::RawMemory<T> *pool_start,
+  RotorBase(RawMemory<T> *pool_start,
             size_t pool_capacity,
-            ArgTypes ...next_pool_info) noexcept
+            ArgTypes &&...next_pool_info) noexcept
     : RotorBase<L...>(std::forward<ArgTypes>(next_pool_info)...),
     pool_(reinterpret_cast<T*>(pool_start)),
     capacity_(pool_capacity) {
